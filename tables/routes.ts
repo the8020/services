@@ -1,4 +1,4 @@
-import { type Row, t, table, type TableDatabase } from "@the8020/db";
+import { type Row, t, table, type TableDatabase } from "/p/the8020/db/mod.ts";
 
 const Routes = table("the8020__services__routes", {
   tokenHash: t.text().primaryKey(),
@@ -22,7 +22,7 @@ const Routes = table("the8020__services__routes", {
   ],
 });
 
-declare module "@the8020/db/types" {
+declare module "/p/the8020/db/types.ts" {
   interface Database extends TableDatabase<typeof Routes> {}
 }
 

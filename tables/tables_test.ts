@@ -4,7 +4,7 @@ import { kernelDatabaseBackendSymbol } from "@the8020/kernel";
 (globalThis as unknown as Record<symbol, unknown>)[
   kernelDatabaseBackendSymbol
 ] = "sqlite";
-const { descriptorOf } = await import("@the8020/db");
+const { descriptorOf } = await import("/p/the8020/db/mod.ts");
 const Overrides = (await import("./overrides.ts")).default;
 const Routes = (await import("./routes.ts")).default;
 const Services = (await import("./services.ts")).default;

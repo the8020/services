@@ -8,8 +8,7 @@
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1.0.14",
-    "@the8020/db": "file:///workspace/packages/the8020/db/mod.ts",
-    "@the8020/db/types": "file:///workspace/packages/the8020/db/types.ts",
+    "/p/": "file:///workspace/packages/",
     "@the8020/kernel": "file:///opt/runtime/kernel/mod.ts",
     "kysely": "npm:kysely@0.29.4"
   },

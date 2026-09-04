@@ -1,4 +1,4 @@
-import { type Row, t, table, type TableDatabase } from "@the8020/db";
+import { type Row, t, table, type TableDatabase } from "/p/the8020/db/mod.ts";
 
 const Versions = table("the8020__services__versions", {
   serviceId: t.text().primaryKey(),
@@ -21,7 +21,7 @@ const Versions = table("the8020__services__versions", {
   indexes: [{ columns: ["packageCommit"] }],
 });
 
-declare module "@the8020/db/types" {
+declare module "/p/the8020/db/types.ts" {
   interface Database extends TableDatabase<typeof Versions> {}
 }
 

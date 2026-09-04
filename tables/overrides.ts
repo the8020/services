@@ -1,4 +1,4 @@
-import { type Row, t, table, type TableDatabase } from "@the8020/db";
+import { type Row, t, table, type TableDatabase } from "/p/the8020/db/mod.ts";
 
 const Overrides = table("the8020__services__overrides", {
   serviceId: t.text().primaryKey(),
@@ -15,7 +15,7 @@ const Overrides = table("the8020__services__overrides", {
   updatedAt: t.datetime().defaultNow(),
 });
 
-declare module "@the8020/db/types" {
+declare module "/p/the8020/db/types.ts" {
   interface Database extends TableDatabase<typeof Overrides> {}
 }
 
