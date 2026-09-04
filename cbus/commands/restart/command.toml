@@ -1,0 +1,8 @@
+version = 1
+program = "restart"
+summary = "Restart a service"
+usage = "<service-id> [--detail]"
+mutates_state = true
+restart_behavior = "none"
+[[examples]]
+command = "services.restart the8020/demo/variables"

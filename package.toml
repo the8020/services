@@ -1,0 +1,4 @@
+schema = 1
+description = "80|20 service policy, versions, and persistent routing"
+documentation_url = "https://github.com/the8020/services"
+license = "Apache-2.0"

@@ -1,0 +1,8 @@
+version = 1
+program = "stop"
+summary = "Stop a service"
+usage = "<service-id> [--detail]"
+mutates_state = true
+restart_behavior = "none"
+[[examples]]
+command = "services.stop the8020/demo/variables"

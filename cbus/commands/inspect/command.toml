@@ -1,0 +1,8 @@
+version = 1
+program = "inspect"
+summary = "Inspect one service"
+usage = "<service-id>"
+mutates_state = false
+restart_behavior = "none"
+[[examples]]
+command = "services.inspect the8020/demo/variables"

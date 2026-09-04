@@ -1,0 +1,8 @@
+version = 1
+program = "request"
+summary = "Send a request through a service"
+usage = "<service-id> <method> <relative-path> [options]"
+mutates_state = false
+restart_behavior = "none"
+[[examples]]
+command = "services.request the8020/demo/variables GET /health"
