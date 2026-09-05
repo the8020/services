@@ -4,6 +4,8 @@ import {
   parseCommandArguments,
   requiredCommandArgument,
 } from "@the8020/kernel";
+import { applyDesired } from "./admin.ts";
+import { duration, type OverrideValues } from "./configuration.ts";
 
 function integer(value: string | boolean | undefined, name: string) {
   if (typeof value !== "string" || !/^-?[0-9]+$/.test(value)) {
@@ -34,7 +36,11 @@ export function lifecycle(
     0,
     "service ID",
   );
-  return kernel.services[action](serviceId, parsed.options.detail === true);
+  return applyDesired(
+    serviceId,
+    { enabled: action !== "stop" },
+    parsed.options.detail === true,
+  );
 }
 
 export function validate(...args: string[]) {
@@ -50,6 +56,7 @@ export function openapi(...args: string[]) {
 
 export function scale(...args: string[]) {
   const valueNames = [
+    "anonymous-user",
     "minimum-workers",
     "maximum-workers",
     "concurrency-per-worker",
@@ -65,15 +72,20 @@ export function scale(...args: string[]) {
     values: valueNames,
     booleans: ["detail"],
   });
-  const input: Record<string, unknown> = {
-    service_id: requiredCommandArgument(parsed.positionals, 0, "service ID"),
-    detail: parsed.options.detail === true,
-  };
+  const serviceId = requiredCommandArgument(
+    parsed.positionals,
+    0,
+    "service ID",
+  );
+  const overrides: OverrideValues = {};
   for (const name of valueNames) {
     const value = parsed.options[name];
     if (value === undefined) continue;
-    const key = name.replaceAll("-", "_");
-    input[key] = [
+    const key = name.replace(
+      /-([a-z])/g,
+      (_, letter: string) => letter.toUpperCase(),
+    );
+    let parsedValue: unknown = [
         "minimum-workers",
         "maximum-workers",
         "concurrency-per-worker",
@@ -82,8 +94,34 @@ export function scale(...args: string[]) {
       ].includes(name)
       ? integer(value, name)
       : value;
+    if (name === "target-utilization") parsedValue = Number(value);
+    if (name === "worker-keep-alive" || name === "session-keep-alive") {
+      try {
+        parsedValue = duration(value, name) / 1_000_000;
+      } catch (error) {
+        throw new AdminCommandError({
+          code: "invalid_arguments",
+          message: String(error),
+        });
+      }
+    }
+    Object.assign(overrides, {
+      [
+        name.endsWith("keep-alive")
+          ? `${key}Ms`
+          : name === "anonymous-user"
+          ? "anonymousUser"
+          : key
+      ]: parsedValue,
+    });
   }
-  return kernel.services.scale(input);
+  if (Object.keys(overrides).length === 0) {
+    throw new AdminCommandError({
+      code: "invalid_arguments",
+      message: "at least one scaling option is required",
+    });
+  }
+  return applyDesired(serviceId, { overrides }, parsed.options.detail === true);
 }
 
 export function request(...args: string[]) {

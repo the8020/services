@@ -1,9 +1,12 @@
 version = 1
+command = "services.scale"
 program = "scale"
 summary = "Scale a service"
-description = "Update Worker scaling, sandbox placement, and lifecycle policy."
+description = "Update execution user, Worker scaling, sandbox placement, and lifecycle policy."
 usage = "<service-id> [options]"
 mutates_state = true
 restart_behavior = "none"
 [[examples]]
 command = "services.scale the8020/demo/variables --minimum-workers 2"
+[[examples]]
+command = "services.scale the8020/demo/variables --anonymous-user visitor"

@@ -12,6 +12,7 @@ const Overrides = table("the8020__services__overrides", {
   sandboxGroup: t.text().nullable(),
   minimumSandboxes: t.integer().nullable(),
   workersPerSandbox: t.integer().nullable(),
+  anonymousUser: t.text().nullable(),
   updatedAt: t.datetime().defaultNow(),
 });
 

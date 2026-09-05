@@ -1,4 +1,5 @@
 version = 1
+command = "services.list"
 program = "list"
 summary = "List services"
 mutates_state = false

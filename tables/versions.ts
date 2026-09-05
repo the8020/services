@@ -16,6 +16,7 @@ const Versions = table("the8020__services__versions", {
   sandboxGroup: t.text(),
   minimumSandboxes: t.integer(),
   workersPerSandbox: t.integer(),
+  anonymousUser: t.text(),
   createdAt: t.datetime().defaultNow(),
 }, {
   indexes: [{ columns: ["packageCommit"] }],

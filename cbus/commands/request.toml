@@ -1,4 +1,5 @@
 version = 1
+command = "services.request"
 program = "request"
 summary = "Send a request through a service"
 usage = "<service-id> <method> <relative-path> [options]"

@@ -1,0 +1,4 @@
+hook = "index-services"
+description = "Resolve the selected package's service declarations and desired configuration"
+program = "the8020/services/index-services"
+order = 0

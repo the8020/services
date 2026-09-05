@@ -22,6 +22,7 @@ const Services = table("the8020__services__services", {
   declaredSandboxGroup: t.text().nullable(),
   declaredMinimumSandboxes: t.integer().nullable(),
   declaredWorkersPerSandbox: t.integer().nullable(),
+  declaredAnonymousUser: t.text().nullable(),
   enabled: t.boolean(),
   active: t.boolean().default(true),
   desiredVersion: t.integer(),

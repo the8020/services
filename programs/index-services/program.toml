@@ -1,0 +1,4 @@
+schema = 1
+description = "Build one package's resolved service runtime index"
+entrypoint = "program.ts"
+discoverable = false

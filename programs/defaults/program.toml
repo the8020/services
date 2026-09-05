@@ -1,0 +1,4 @@
+schema = 1
+description = "Inspect or change services-package defaults"
+entrypoint = "program.ts"
+discoverable = false

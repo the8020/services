@@ -1,0 +1,12 @@
+version = 1
+command = "services.defaults"
+program = "defaults"
+summary = "Inspect or change service defaults"
+description = "Service durations use milliseconds; target utilization uses an integer percentage. Changes reindex affected packages."
+usage = "[<name> <integer> | <name> --unset]"
+mutates_state = true
+restart_behavior = "none"
+[[examples]]
+command = "services.defaults"
+[[examples]]
+command = "services.defaults request_timeout 30000"
