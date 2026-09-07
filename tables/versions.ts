@@ -1,7 +1,10 @@
 import { type Row, t, table, type TableDatabase } from "/p/the8020/db/mod.ts";
 
+import { serviceId } from "../types/service.ts";
+import { username } from "/p/the8020/users/types/user.ts";
+
 const Versions = table("the8020__services__versions", {
-  serviceId: t.text().primaryKey(),
+  serviceId: t.from(serviceId).primaryKey(),
   version: t.integer().primaryKey(),
   packageCommit: t.text(),
   manifestHash: t.text(),
@@ -16,7 +19,7 @@ const Versions = table("the8020__services__versions", {
   sandboxGroup: t.text(),
   minimumSandboxes: t.integer(),
   workersPerSandbox: t.integer(),
-  anonymousUser: t.text(),
+  anonymousUser: t.from(username),
   createdAt: t.datetime().defaultNow(),
 }, {
   indexes: [{ columns: ["packageCommit"] }],

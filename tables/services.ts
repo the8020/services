@@ -1,8 +1,13 @@
 import { type Row, t, table, type TableDatabase } from "/p/the8020/db/mod.ts";
 
+import { serviceId } from "../types/service.ts";
+import { username } from "/p/the8020/users/types/user.ts";
+
+import { packageId } from "/p/the8020/packages/types/package.ts";
+
 const Services = table("the8020__services__services", {
-  serviceId: t.text().primaryKey(),
-  packageId: t.text(),
+  serviceId: t.from(serviceId).primaryKey(),
+  packageId: t.from(packageId),
   packageCommit: t.text(),
   manifestHash: t.text(),
   description: t.text(),
@@ -22,7 +27,7 @@ const Services = table("the8020__services__services", {
   declaredSandboxGroup: t.text().nullable(),
   declaredMinimumSandboxes: t.integer().nullable(),
   declaredWorkersPerSandbox: t.integer().nullable(),
-  declaredAnonymousUser: t.text().nullable(),
+  declaredAnonymousUser: t.from(username).nullable(),
   enabled: t.boolean(),
   active: t.boolean().default(true),
   desiredVersion: t.integer(),

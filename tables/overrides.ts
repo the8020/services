@@ -1,7 +1,10 @@
 import { type Row, t, table, type TableDatabase } from "/p/the8020/db/mod.ts";
 
+import { serviceId } from "../types/service.ts";
+import { username } from "/p/the8020/users/types/user.ts";
+
 const Overrides = table("the8020__services__overrides", {
-  serviceId: t.text().primaryKey(),
+  serviceId: t.from(serviceId).primaryKey(),
   serviceType: t.enum(["stateless", "session"] as const).nullable(),
   sessionKeepAliveMs: t.integer().nullable(),
   minimumWorkers: t.integer().nullable(),
@@ -12,7 +15,7 @@ const Overrides = table("the8020__services__overrides", {
   sandboxGroup: t.text().nullable(),
   minimumSandboxes: t.integer().nullable(),
   workersPerSandbox: t.integer().nullable(),
-  anonymousUser: t.text().nullable(),
+  anonymousUser: t.from(username).nullable(),
   updatedAt: t.datetime().defaultNow(),
 });
 

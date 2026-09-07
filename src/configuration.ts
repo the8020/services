@@ -71,7 +71,11 @@ function boolean(value: unknown, name: string, fallback: boolean): boolean {
   return value;
 }
 
-export function duration(value: unknown, name: string): number {
+export function duration(
+  value: unknown,
+  name: string,
+  allowZero = false,
+): number {
   if (typeof value !== "string") {
     throw new TypeError(`${name} must be a positive duration`);
   }
@@ -98,8 +102,15 @@ export function duration(value: unknown, name: string): number {
     total += Number(match[1]) * units[match[2]!]!;
     offset += match[0].length;
   }
-  if (offset !== value.length || !Number.isSafeInteger(total) || total <= 0) {
-    throw new TypeError(`${name} must be a positive, representable duration`);
+  if (
+    offset === 0 || offset !== value.length || !Number.isSafeInteger(total) ||
+    (allowZero ? total < 0 : total <= 0)
+  ) {
+    throw new TypeError(
+      `${name} must be a ${
+        allowZero ? "nonnegative" : "positive"
+      }, representable duration`,
+    );
   }
   return total;
 }
@@ -248,8 +259,11 @@ export function declaration(source: string): Declaration {
     }
   }
   if (lifecycle.session_keep_alive !== undefined) {
-    result.declared.sessionKeepAliveMs =
-      duration(lifecycle.session_keep_alive, "lifecycle.session_keep_alive") /
+    result.declared.sessionKeepAliveMs = duration(
+      lifecycle.session_keep_alive,
+      "lifecycle.session_keep_alive",
+      true,
+    ) /
       1_000_000;
   }
   if (scaling.worker_keep_alive !== undefined) {
@@ -362,7 +376,6 @@ export function validateConfiguration(value: Configuration): void {
   ) throw new TypeError("invalid sandbox_group");
   for (
     const [name, time] of Object.entries({
-      session_keep_alive: value.lifecycle.session_keep_alive,
       worker_keep_alive: value.scaling.worker_keep_alive,
       request_timeout: value.timeouts.request,
       drain_timeout: value.timeouts.drain,
@@ -371,6 +384,15 @@ export function validateConfiguration(value: Configuration): void {
     if (!Number.isSafeInteger(time) || time <= 0) {
       throw new TypeError(`${name} must be positive`);
     }
+  }
+  const sessionKeepAlive = value.lifecycle.session_keep_alive;
+  if (
+    !Number.isSafeInteger(sessionKeepAlive) || sessionKeepAlive < 0 ||
+    sessionKeepAlive > 0 && sessionKeepAlive < 1_000_000
+  ) {
+    throw new TypeError(
+      "session_keep_alive must be zero or at least one millisecond",
+    );
   }
   if (!Number.isSafeInteger(value.timeouts.idle) || value.timeouts.idle < 0) {
     throw new TypeError("invalid idle timeout");

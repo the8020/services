@@ -14,6 +14,8 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 - Default-export authored table descriptors through `/p/the8020/db/mod.ts`;
   table identity follows the package and file path.
+- Service, package, and execution-principal columns reuse their owning semantic
+  Zod fields through `t.from`; table-local keys and nullability stay explicit.
 - Retired or removed declarations do not erase operator overrides.
 - Normal activation retires removed schemas; physical removal remains an
   explicit confirmed trim.

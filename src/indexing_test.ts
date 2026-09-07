@@ -18,6 +18,41 @@ const Packages =
   (await import("/p/the8020/packages/tables/packages.ts")).default;
 const Settings = (await import("/p/the8020/system/tables/settings.ts")).default;
 
+Deno.test("service help searches active declarations and pages disabled services too", async () => {
+  const previous = globals[kernelInvokeSymbol];
+  const sql = database();
+  try {
+    sql.exec(
+      `INSERT INTO "the8020__services__services" ("serviceId", "description", "enabled", "active") VALUES
+      ('example/app/a', 'Public API', 1, 1),
+      ('example/app/b', 'Private API', 0, 1),
+      ('example/app/c', 'Retired API', 1, 0)`,
+    );
+    const { serviceId } = await import("../types/service.ts");
+    const { fieldMetadata } = await import("/p/the8020/db/fields.ts");
+    const lookup = fieldMetadata(serviceId)!.valueHelp!;
+    assertEquals(await lookup({ query: " API ", offset: 0, limit: 1 }), {
+      items: [{
+        value: "example/app/a",
+        label: "example/app/a",
+        description: "Public API",
+      }],
+      more: true,
+    });
+    assertEquals(await lookup({ query: " API ", offset: 1, limit: 1 }), {
+      items: [{
+        value: "example/app/b",
+        label: "example/app/b",
+        description: "Private API · Disabled",
+      }],
+      more: false,
+    });
+  } finally {
+    sql.close();
+    globals[kernelInvokeSymbol] = previous;
+  }
+});
+
 function database() {
   const sql = new DatabaseSync(":memory:");
   for (

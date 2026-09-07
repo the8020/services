@@ -74,3 +74,35 @@ Deno.test("service declaration errors are rejected before desired configuration 
     assertThrows(() => duration(input, "keepalive"), TypeError);
   }
 });
+
+Deno.test("zero session keepalive retains execution until explicit completion", () => {
+  const manifest = declaration(
+    'schema = 2\n[lifecycle]\nservice_type = "session"\nsession_keep_alive = "0s"',
+  );
+  assertEquals(resolveConfiguration(manifest).lifecycle.session_keep_alive, 0);
+  assertEquals(
+    resolveConfiguration(manifest, { sessionKeepAliveMs: 10 }).lifecycle
+      .session_keep_alive,
+    10_000_000,
+  );
+  assertEquals(
+    resolveConfiguration(declaration("schema = 2"), { sessionKeepAliveMs: 0 })
+      .lifecycle.session_keep_alive,
+    0,
+  );
+  for (const time of ["", "-1s", "1ns"]) {
+    assertThrows(
+      () =>
+        declaration(`schema = 2\n[lifecycle]\nsession_keep_alive = "${time}"`),
+      TypeError,
+    );
+  }
+  assertThrows(
+    () => resolveConfiguration(manifest, { sessionKeepAliveMs: -1 }),
+    TypeError,
+  );
+  assertThrows(
+    () => declaration('schema = 2\n[scaling]\nworker_keep_alive = "0s"'),
+    TypeError,
+  );
+});

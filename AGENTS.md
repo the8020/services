@@ -119,6 +119,8 @@ below.
   configuration mutations, defaults, and package indexing.
 - [tables/AGENTS.md](tables/AGENTS.md): Describe service declarations, operator
   overrides, and immutable effective versions.
+- [types/AGENTS.md](types/AGENTS.md): Share service references with searchable
+  value help and linked administration.
 
 # Purpose
 
@@ -141,6 +143,10 @@ below.
   Precedence is package fallback, configured platform default, active
   declaration, then explicit operator override. A service version captures its
   resolved policy.
+- `lifecycle.session_keep_alive = "0s"` retains a session execution until explicit
+  completion or destruction of its owner. Positive values are at least one
+  millisecond. Omission retains the ten-minute default; Worker keepalive remains
+  positive and independent.
 - `src/defaults.ts` owns service defaults stored under the existing
   `services.default_*` keys in system settings. They are application settings,
   never Go setting definitions, validation, or environment inputs.
@@ -176,6 +182,17 @@ below.
 - Removing the former routes table declaration follows normal schema retirement:
   activation retires its catalog entry and retains physical data until explicit
   confirmed trim. Never delete deployed tables through ad hoc cleanup.
+
+# Work Guidance
+
+- Keep declarations, defaults, operator policy, and effective versions in this
+  standalone Deno package. New application behavior uses ordinary services and
+  programs; touch the kernel only when a generic execution foundation is
+  missing.
+- Reuse one configuration mutation path and publish bounded, package-targeted
+  fragments from transactional revisions. Preserve accepted runtime state on
+  publication failure and verify policy and runtime behavior at their
+  respective owners.
 
 # Verification
 
