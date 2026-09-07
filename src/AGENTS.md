@@ -26,8 +26,8 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 - Add service policy here through the existing resolution and mutation
   contracts, keeping unrelated application features in their own packages.
-  Validate before publishing and preserve the distinction between saved
-  desired state and accepted runtime state.
+  Validate before publishing and preserve the distinction between saved desired
+  state and accepted runtime state.
 
 - Keep publication package-targeted and use the same mutation API from command
   programs and UUI administration.

@@ -143,10 +143,10 @@ below.
   Precedence is package fallback, configured platform default, active
   declaration, then explicit operator override. A service version captures its
   resolved policy.
-- `lifecycle.session_keep_alive = "0s"` retains a session execution until explicit
-  completion or destruction of its owner. Positive values are at least one
-  millisecond. Omission retains the ten-minute default; Worker keepalive remains
-  positive and independent.
+- `lifecycle.session_keep_alive = "0s"` retains a session execution until
+  explicit completion or destruction of its owner. Positive values are at least
+  one millisecond. Omission retains the ten-minute default; Worker keepalive
+  remains positive and independent.
 - `src/defaults.ts` owns service defaults stored under the existing
   `services.default_*` keys in system settings. They are application settings,
   never Go setting definitions, validation, or environment inputs.
@@ -191,8 +191,8 @@ below.
   missing.
 - Reuse one configuration mutation path and publish bounded, package-targeted
   fragments from transactional revisions. Preserve accepted runtime state on
-  publication failure and verify policy and runtime behavior at their
-  respective owners.
+  publication failure and verify policy and runtime behavior at their respective
+  owners.
 
 # Verification
 
