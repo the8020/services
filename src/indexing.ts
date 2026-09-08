@@ -170,7 +170,7 @@ export function versionRow(
 
 async function install(
   tx: Transaction<Database>,
-  scope: IndexScope,
+  scope: IndexScope["packages"][number],
   source: Source,
   existing: Selectable<ServiceRow> | undefined,
   override: Selectable<ServiceOverrideRow> | undefined,
@@ -188,7 +188,6 @@ async function install(
       .select("policyHash").where("serviceId", "=", source.id)
       .where("version", "=", existing.desiredVersion).executeTakeFirst();
   const changed = existing === undefined ||
-    existing.packageCommit !== scope.package_commit ||
     existing.manifestHash !== source.manifestHash ||
     previous?.policyHash !== policyHash;
   const version = (existing?.desiredVersion ?? 0) + (changed ? 1 : 0);
@@ -222,7 +221,10 @@ async function install(
     desiredVersion: version,
     updatedAt: new Date(),
   };
-  if (changed || !existing?.active) {
+  if (
+    changed || !existing?.active ||
+    existing.packageCommit !== scope.package_commit
+  ) {
     await tx.insertInto(Services.table).values({
       serviceId: source.id,
       ...row,
@@ -253,22 +255,36 @@ async function install(
   };
 }
 
-// Package selection is invocation scope. Later hooks may enhance/filter this
-// draft, but cannot change what package the kernel will atomically publish.
+// All selected packages pass through the complete hook chain in one Worker.
+// Package failures remain explicit so healthy fragments can still be published.
 export async function buildIndex(
   state: IndexState,
   scope: Readonly<IndexScope>,
-  packageRoot = new URL(`file:///workspace/packages/${scope.package_id}/`),
+  root = new URL("file:///workspace/packages/"),
 ): Promise<void> {
+  for (const selected of scope.packages) {
+    const draft = state.packages[selected.package_id]!;
+    try {
+      draft.services.push(...await indexPackage(selected, root));
+    } catch (error) {
+      draft.error = error instanceof Error ? error.message : String(error);
+    }
+  }
+}
+
+async function indexPackage(
+  scope: IndexScope["packages"][number],
+  root: URL,
+): Promise<Specification[]> {
   if (
     !/^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(
       scope.package_id,
     )
   ) throw new TypeError("invalid package scope");
   const sources = scope.active
-    ? await readSources(scope.package_id, packageRoot)
+    ? await readSources(scope.package_id, new URL(`${scope.package_id}/`, root))
     : [];
-  const specs = await db.transaction().execute(async (tx) => {
+  return await db.transaction().execute(async (tx) => {
     await lockIndexRevision(tx);
     const active = await tx.selectFrom(Packages.table).select([
       "activeCommit",
@@ -323,5 +339,4 @@ export async function buildIndex(
     }
     return result;
   });
-  state.services.push(...specs);
 }

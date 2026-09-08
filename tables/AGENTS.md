@@ -16,6 +16,10 @@ Parent DOX: [services DOX](../AGENTS.md).
   table identity follows the package and file path.
 - Service, package, and execution-principal columns reuse their owning semantic
   Zod fields through `t.from`; table-local keys and nullability stay explicit.
+- Shared service policy counts, grouping, lifecycle type, descriptions, and
+  versions reuse `types/service.ts`; source commits/entrypoints reuse package
+  fields. Durations in milliseconds and fractional utilization retain their
+  existing physical representations.
 - Retired or removed declarations do not erase operator overrides.
 - Normal activation retires removed schemas; physical removal remains an
   explicit confirmed trim.

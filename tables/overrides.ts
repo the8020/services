@@ -1,20 +1,21 @@
 import { type Row, t, table, type TableDatabase } from "/p/the8020/db/mod.ts";
 
-import { serviceId } from "../types/service.ts";
+import { serviceId, serviceSettings } from "../types/service.ts";
 import { username } from "/p/the8020/users/types/user.ts";
 
 const Overrides = table("the8020__services__overrides", {
   serviceId: t.from(serviceId).primaryKey(),
-  serviceType: t.enum(["stateless", "session"] as const).nullable(),
+  serviceType: t.from(serviceSettings.shape.serviceType).nullable(),
   sessionKeepAliveMs: t.integer().nullable(),
-  minimumWorkers: t.integer().nullable(),
-  maximumWorkers: t.integer().nullable(),
-  concurrencyPerWorker: t.integer().nullable(),
+  minimumWorkers: t.from(serviceSettings.shape.minimumWorkers).nullable(),
+  maximumWorkers: t.from(serviceSettings.shape.maximumWorkers).nullable(),
+  concurrencyPerWorker: t.from(serviceSettings.shape.concurrencyPerWorker)
+    .nullable(),
   targetUtilization: t.float().nullable(),
   workerKeepAliveMs: t.integer().nullable(),
-  sandboxGroup: t.text().nullable(),
-  minimumSandboxes: t.integer().nullable(),
-  workersPerSandbox: t.integer().nullable(),
+  sandboxGroup: t.from(serviceSettings.shape.sandboxGroup).nullable(),
+  minimumSandboxes: t.from(serviceSettings.shape.minimumSandboxes).nullable(),
+  workersPerSandbox: t.from(serviceSettings.shape.workersPerSandbox).nullable(),
   anonymousUser: t.from(username).nullable(),
   updatedAt: t.datetime().defaultNow(),
 });

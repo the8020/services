@@ -13,8 +13,8 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 - The handler runs in the complete ordered index-services chain as one ordinary
   system job.
-- Receive shared mutable draft state and a separate frozen owning-package/commit
-  scope.
+- Receive shared mutable per-package drafts and a separate frozen selection of
+  package IDs, commits, and active flags. One chain covers the whole selection.
 
 # Work Guidance
 

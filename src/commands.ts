@@ -4,7 +4,7 @@ import {
   parseCommandArguments,
   requiredCommandArgument,
 } from "@the8020/kernel";
-import { applyDesired } from "./admin.ts";
+import { applyDesired, serviceResult } from "./admin.ts";
 import { duration, type OverrideValues } from "./configuration.ts";
 
 function integer(value: string | boolean | undefined, name: string) {
@@ -30,12 +30,23 @@ export function lifecycle(
   action: "start" | "stop" | "restart",
   args: string[],
 ) {
-  const parsed = parseCommandArguments(args, { booleans: ["detail"] });
+  const parsed = parseCommandArguments(args, {
+    booleans: action === "restart" ? ["detail", "hard"] : ["detail"],
+  });
   const serviceId = requiredCommandArgument(
     parsed.positionals,
     0,
     "service ID",
   );
+  if (action === "restart") {
+    return kernel.services.restart(
+      serviceId,
+      parsed.options.hard === true ? "hard" : "soft",
+    )
+      .then((service) =>
+        serviceResult(service, parsed.options.detail === true)
+      );
+  }
   return applyDesired(
     serviceId,
     { enabled: action !== "stop" },

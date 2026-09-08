@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals, assertStringIncludes } from "@std/assert";
 import { DatabaseSync } from "node:sqlite";
 import {
   kernelDatabaseBackendSymbol,
@@ -17,6 +17,37 @@ const Revisions =
 const Packages =
   (await import("/p/the8020/packages/tables/packages.ts")).default;
 const Settings = (await import("/p/the8020/system/tables/settings.ts")).default;
+
+Deno.test("restart commands use typed lifecycle without writing configuration", async () => {
+  const previous = globals[kernelInvokeSymbol];
+  const { lifecycle } = await import("./commands.ts");
+  const calls: unknown[] = [];
+  globals[kernelInvokeSymbol] = (operation: string, input: unknown) => {
+    calls.push([operation, input]);
+    return Promise.resolve({
+      success: true,
+      result: { service: { service_id: "acme/api/one", state: "READY" } },
+    });
+  };
+  try {
+    await lifecycle("restart", ["acme/api/one"]);
+    assertEquals(
+      await lifecycle("restart", ["acme/api/one", "--hard", "--detail"]),
+      {
+        service: { service_id: "acme/api/one", state: "READY" },
+      },
+    );
+    assertEquals(
+      calls,
+      ["soft", "hard"].map((mode) => ["runtime.operation", {
+        operation: "service.restart",
+        input: { service_id: "acme/api/one", mode },
+      }]),
+    );
+  } finally {
+    globals[kernelInvokeSymbol] = previous;
+  }
+});
 
 Deno.test("service help searches active declarations and pages disabled services too", async () => {
   const previous = globals[kernelInvokeSymbol];
@@ -123,7 +154,8 @@ function database() {
 Deno.test("package index provider owns durable declarations, versions, overrides, and retirement", async () => {
   const sql = database();
   const root = await Deno.makeTempDir();
-  const packageRoot = new URL(`file://${root}/`);
+  const packagesRoot = new URL(`file://${root}/`);
+  const packageRoot = new URL("acme/api/", packagesRoot);
   const packageId = "acme/api";
   const scope = {
     package_id: packageId,
@@ -155,11 +187,27 @@ Deno.test("package index provider owns durable declarations, versions, overrides
         "export default {};",
       );
     }
-    const initial = { services: [] };
-    await buildIndex(initial, scope, packageRoot);
+    const index = async (selected = scope) => {
+      const state: import("./indexing.ts").IndexState = {
+        packages: {
+          [packageId]: { services: [] },
+          "acme/empty": { services: [] },
+        },
+      };
+      await buildIndex(state, {
+        packages: [selected, {
+          package_id: "acme/empty",
+          package_commit: "",
+          active: false,
+        }],
+      }, packagesRoot);
+      assertEquals(state.packages["acme/empty"], { services: [] });
+      return state.packages[packageId]!;
+    };
+    const initial = await index();
     assertEquals(initial.services.length, 2);
     assertEquals(count(), 2);
-    await buildIndex({ services: [] }, scope, packageRoot);
+    await index();
     assertEquals(
       count(),
       2,
@@ -169,10 +217,7 @@ Deno.test("package index provider owns durable declarations, versions, overrides
       `INSERT INTO ${Overrides.table} (serviceId, maximumWorkers, anonymousUser) VALUES (?, 8, 'alice')`,
     )
       .run(`${packageId}/one`);
-    const overridden = {
-      services: [] as import("./configuration.ts").Specification[],
-    };
-    await buildIndex(overridden, scope, packageRoot);
+    const overridden = await index();
     assertEquals(
       overridden.services[0]!.configuration.scaling.maximum_workers,
       8,
@@ -183,6 +228,18 @@ Deno.test("package index provider owns durable declarations, versions, overrides
     );
     assertEquals(overridden.services[0]!.version, 2);
     assertEquals(count(), 3);
+    scope.package_commit = "source-only";
+    sql.prepare(
+      `UPDATE ${Packages.table} SET activeCommit = ? WHERE packageId = ?`,
+    ).run(scope.package_commit, packageId);
+    const sourceOnly = await index();
+    assertEquals(sourceOnly.services[0]!.version, 2);
+    assertEquals(sourceOnly.services[0]!.code_revision, "source-only");
+    assertEquals(
+      count(),
+      3,
+      "source-only changes do not allocate policy versions",
+    );
     await Deno.writeTextFile(
       new URL("services/one/service.toml", packageRoot),
       manifest(12),
@@ -191,12 +248,8 @@ Deno.test("package index provider owns durable declarations, versions, overrides
       new URL("services/two/service.toml", packageRoot),
       "schema = 1",
     );
-    const failed = { services: [] };
-    await assertRejects(
-      () => buildIndex(failed, scope, packageRoot),
-      TypeError,
-      "schema",
-    );
+    const failed = await index();
+    assertStringIncludes(failed.error!, "schema");
     assertEquals(failed.services, []);
     assertEquals(
       count(),
@@ -210,40 +263,31 @@ Deno.test("package index provider owns durable declarations, versions, overrides
     sql.prepare(
       `UPDATE ${Packages.table} SET activeCommit = ? WHERE packageId = ?`,
     ).run("commit-b", packageId);
-    const replacement = {
-      services: [] as import("./configuration.ts").Specification[],
-    };
-    await buildIndex(replacement, scope, packageRoot);
+    const replacement = await index();
     assertEquals(replacement.services.length, 1);
     assertEquals(
       replacement.services[0]!.configuration.scaling.maximum_workers,
       8,
     );
     assertEquals(replacement.services[0]!.version, 3);
+    assertEquals(replacement.services[0]!.code_revision, "commit-b");
+    assertEquals(
+      count(),
+      4,
+      "declaration changes still allocate policy versions",
+    );
     assertEquals(
       sql.prepare(`SELECT active FROM ${Services.table} WHERE serviceId = ?`)
         .get(`${packageId}/two`)!.active,
       0,
     );
-    await assertRejects(
-      () =>
-        buildIndex(
-          { services: [] },
-          { ...scope, package_commit: "stale" },
-          packageRoot,
-        ),
-      Error,
-      "changed while indexing",
-    );
+    const stale = await index({ ...scope, package_commit: "stale" });
+    assertStringIncludes(stale.error!, "changed while indexing");
     assertEquals(count(), 4);
     sql.prepare(
       `UPDATE ${Packages.table} SET state = 'retired' WHERE packageId = ?`,
     ).run(packageId);
-    await buildIndex(
-      { services: [] },
-      { ...scope, active: false },
-      packageRoot,
-    );
+    await index({ ...scope, active: false });
     assertEquals(
       sql.prepare(
         `SELECT COUNT(*) AS count FROM ${Services.table} WHERE active`,

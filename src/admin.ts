@@ -108,6 +108,13 @@ export async function applyDesired(
     });
   }
   const status = await kernel.services.inspect(serviceId);
+  return serviceResult(status, detail);
+}
+
+export function serviceResult(
+  status: Record<string, unknown>,
+  detail: boolean,
+) {
   if (detail) return { service: status };
   return Object.fromEntries([
     "service_id",

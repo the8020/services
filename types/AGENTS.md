@@ -2,14 +2,23 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 # Purpose
 
-- Own reusable service references for tables, forms, and lists.
+- Own reusable service references, observed metadata, and configuration fields
+  for tables, forms, and lists.
 
 # Ownership
 
-- `service.ts` defines the semantic Zod `serviceId` field.
+- `service.ts` defines `serviceId`, `serviceInfo`, and `serviceSettings`.
+  Configuration resolution and mutations stay in `src/`.
 
 # Local Contracts
 
+- Policy fields own labels, help, and scalar constraints; sandbox grouping
+  reuses the admin-core runtime field shared with Jobs. UUI keeps sliders,
+  visibility, and read-only settings local. Target utilization in the form is
+  explicitly a percentage; durable configuration retains its fraction. Text
+  duration fields retain duration notation; durable rows retain milliseconds.
+- Observed service type and access fields accept incomplete inspection text; the
+  editable service type and stored declaration use the validated enum.
 - Lookup searches active declarations by ID or description, with database paging
   and one-row lookahead. Disabled services remain selectable.
 - Open calls the selected service's public administration program. Load database

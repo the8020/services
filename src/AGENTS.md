@@ -14,6 +14,10 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 - Resolve package fallback, platform defaults, declaration, then explicit
   operator overrides; effective versions are immutable.
+- Package commit changes alone update source diagnostics without adding policy
+  versions. Manual restart delegates to `kernel.services.restart`; `--hard`
+  requests immediate termination of active and draining generations. Neither
+  mode writes overrides, enables disabled services, or fabricates a policy edit.
 - Session keepalive accepts zero for explicit-completion lifetime and positive
   durations of at least one millisecond. Declaration, defaults, and operator
   overrides share this validation. Worker keepalive remains strictly positive.
@@ -29,6 +33,8 @@ Parent DOX: [services DOX](../AGENTS.md).
   Validate before publishing and preserve the distinction between saved desired
   state and accepted runtime state.
 
+- Index the selected packages in one invocation with one transaction and result
+  per package. Preserve explicit errors without discarding healthy drafts.
 - Keep publication package-targeted and use the same mutation API from command
   programs and UUI administration.
 

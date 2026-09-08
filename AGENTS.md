@@ -120,7 +120,7 @@ below.
 - [tables/AGENTS.md](tables/AGENTS.md): Describe service declarations, operator
   overrides, and immutable effective versions.
 - [types/AGENTS.md](types/AGENTS.md): Share service references with searchable
-  value help and linked administration.
+  value help, service metadata, and reusable configuration fields.
 
 # Purpose
 
@@ -150,17 +150,23 @@ below.
 - `src/defaults.ts` owns service defaults stored under the existing
   `services.default_*` keys in system settings. They are application settings,
   never Go setting definitions, validation, or environment inputs.
-- `src/indexing.ts` discovers only the selected owning package's services and
-  updates declaration/version rows transactionally. The hook handler may live in
-  this package while indexing any active package. Retired/removed packages
-  produce empty fragments without deleting operator overrides.
+- `src/indexing.ts` discovers services for the complete selected package set in
+  one invocation, updating declaration/version rows in a transaction per
+  package. Package failures are explicit result errors and do not block healthy
+  packages. Retired/removed packages produce empty fragments without deleting
+  operator overrides.
+- Source-only package commit changes refresh declaration diagnostics without
+  advancing immutable policy versions. Observed imports and generic kernel
+  restart revisions drive code replacement independently of configuration.
 - `hooks/index-services.toml` selects an ordinary program. The kernel runs the
-  complete ordered handler chain as one system job with normal mounts and
-  permissions. Every handler receives the same mutable draft and a separate
-  frozen package/commit scope. Handlers may enhance or filter that draft.
-- A failed handler or invalid final specification leaves the kernel's last
-  accepted fragment intact. A successful fragment atomically replaces its
-  package, including removal of omitted services. Other fragments keep serving.
+  complete ordered handler chain once as one system job with normal mounts and
+  permissions. Every handler receives the same mutable `state.packages` drafts
+  and a separate frozen `scope.packages` selection with package IDs, commits,
+  and active flags. Handlers may enhance or filter those drafts.
+- A failed handler retains all selected accepted fragments. A package error or
+  invalid final specification retains only that package's accepted fragment. A
+  successful fragment atomically replaces its package, including removal of
+  omitted services. Other fragments keep serving.
 - Configuration mutations lock and advance generic package-index revisions in
   the same transaction through `the8020/system/src/indexes.ts`, then call
   `kernel.reindex` for the affected packages. Missed notifications catch up from
@@ -170,11 +176,13 @@ below.
   Principals are structural kernel identities; account rows and login policy
   belong to users and never govern job/service execution eligibility.
 - Flat `cbus/commands/*.toml` declarations contain complete `services.*` names
-  and ordinary same-package programs. Start/stop/restart/scale/defaults persist
-  application configuration in Deno and trigger targeted publication. Kernel
-  operations supply only observed list/inspect/refresh and runtime validation,
-  request, and OpenAPI primitives. UUI administration imports the same
-  `src/admin.ts` mutation functions within its current Worker.
+  and ordinary same-package programs. Start/stop/scale/defaults persist
+  application configuration in Deno and trigger targeted publication.
+  `services.restart` calls `kernel.services.restart` with soft mode by default
+  and hard mode for `--hard`, preserving the enabled policy. Kernel operations
+  also supply observed list/inspect/refresh and runtime validation, request, and
+  OpenAPI primitives. UUI administration imports the same `src/admin.ts`
+  mutation functions within its current Worker.
 - Local package commands use the ordinary system job runtime and remain usable
   when HTTP services or authentication are broken, provided the database and
   execution runtime work. Publication errors report whether desired settings

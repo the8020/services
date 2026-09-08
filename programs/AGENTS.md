@@ -13,8 +13,8 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 - Configuration-changing commands use the shared Deno API and targeted kernel
   publication.
-- Index-services receives draft state and immutable package scope; failures must
-  preserve the last accepted kernel fragment.
+- Index-services receives per-package drafts and an immutable package selection;
+  failures must preserve the last accepted kernel fragment.
 
 # Work Guidance
 

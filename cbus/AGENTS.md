@@ -15,6 +15,8 @@ Parent DOX: [services DOX](../AGENTS.md).
   an ordinary same-package program in `program`.
 - Keep declarations flat. Filenames do not define command identity, and
   duplicate public names are invalid.
+- `services.restart <service ID> [--hard] [--detail]` uses soft replacement by
+  default; `--hard` terminates all of that service's active/draining Workers.
 
 # Work Guidance
 
