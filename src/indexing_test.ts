@@ -62,22 +62,39 @@ Deno.test("service help searches active declarations and pages disabled services
     const { serviceId } = await import("../types/service.ts");
     const { fieldMetadata } = await import("/p/the8020/db/fields.ts");
     const lookup = fieldMetadata(serviceId)!.valueHelp!;
-    assertEquals(await lookup({ query: " API ", offset: 0, limit: 1 }), {
-      items: [{
-        value: "example/app/a",
-        label: "example/app/a",
-        description: "Public API",
-      }],
-      more: true,
+    const query = { search: " API ", filters: {}, sort: null };
+    const first = await lookup({ query, offset: 0, limit: 1 });
+    assertEquals(Object.keys(first.schema.shape), [
+      "serviceId",
+      "description",
+      "enabled",
+    ]);
+    assertEquals(first.rows, [{
+      serviceId: "example/app/a",
+      description: "Public API",
+      enabled: true,
+    }]);
+    assertEquals([first.more, first.totalItems], [true, 2]);
+    const last = await lookup({ query, offset: 1, limit: 1 });
+    assertEquals(last.rows, [{
+      serviceId: "example/app/b",
+      description: "Private API",
+      enabled: false,
+    }]);
+    assertEquals([last.more, last.totalItems], [false, 2]);
+    const sorted = await lookup({
+      query: { ...query, sort: { column: "description", direction: "asc" } },
+      offset: 0,
+      limit: 1,
     });
-    assertEquals(await lookup({ query: " API ", offset: 1, limit: 1 }), {
-      items: [{
-        value: "example/app/b",
-        label: "example/app/b",
-        description: "Private API · Disabled",
-      }],
-      more: false,
+    assertEquals(sorted.rows, last.rows);
+    const filtered = await lookup({
+      query: { ...query, filters: { enabled: "no" } },
+      offset: 0,
+      limit: 1,
     });
+    assertEquals(filtered.rows, last.rows);
+    assertEquals([filtered.more, filtered.totalItems], [false, 1]);
   } finally {
     sql.close();
     globals[kernelInvokeSymbol] = previous;

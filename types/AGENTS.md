@@ -19,8 +19,10 @@ Parent DOX: [services DOX](../AGENTS.md).
   duration fields retain duration notation; durable rows retain milliseconds.
 - Observed service type and access fields accept incomplete inspection text; the
   editable service type and stored declaration use the validated enum.
-- Lookup searches active declarations by ID or description, with database paging
-  and one-row lookahead. Disabled services remain selectable.
+- Lookup exposes service ID, description, and enabled fields, with ID first. The
+  shared SQL lookup applies full list queries before paging and returns the
+  matching count. Only active declarations appear; disabled services remain
+  selectable.
 - Open calls the selected service's public administration program. Load database
   and UUI dependencies only when the callback runs.
 
