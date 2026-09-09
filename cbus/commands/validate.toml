@@ -1,6 +1,6 @@
 version = 1
 command = "services.validate"
-program = "validate"
+program = "the8020/services/validate"
 summary = "Validate a service"
 usage = "<service-id>"
 mutates_state = false

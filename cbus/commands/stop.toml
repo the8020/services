@@ -1,6 +1,6 @@
 version = 1
 command = "services.stop"
-program = "stop"
+program = "the8020/services/stop"
 summary = "Stop a service"
 usage = "<service-id> [--detail]"
 mutates_state = true

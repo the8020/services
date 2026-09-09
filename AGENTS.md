@@ -176,7 +176,7 @@ below.
   Principals are structural kernel identities; account rows and login policy
   belong to users and never govern job/service execution eligibility.
 - Flat `cbus/commands/*.toml` declarations contain complete `services.*` names
-  and ordinary same-package programs. Start/stop/scale/defaults persist
+  and full `namespace/package/program` IDs. Start/stop/scale/defaults persist
   application configuration in Deno and trigger targeted publication.
   `services.restart` calls `kernel.services.restart` with soft mode by default
   and hard mode for `--hard`, preserving the enabled policy. Kernel operations

@@ -1,6 +1,6 @@
 version = 1
 command = "services.defaults"
-program = "defaults"
+program = "the8020/services/defaults"
 summary = "Inspect or change service defaults"
 description = "Service durations use milliseconds; target utilization uses an integer percentage. Changes reindex affected packages."
 usage = "[<name> <integer> | <name> --unset]"

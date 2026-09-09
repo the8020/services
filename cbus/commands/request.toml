@@ -1,6 +1,6 @@
 version = 1
 command = "services.request"
-program = "request"
+program = "the8020/services/request"
 summary = "Send a request through a service"
 usage = "<service-id> <method> <relative-path> [options]"
 mutates_state = false

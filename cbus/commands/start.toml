@@ -1,6 +1,6 @@
 version = 1
 command = "services.start"
-program = "start"
+program = "the8020/services/start"
 summary = "Start a service"
 usage = "<service-id> [--detail]"
 mutates_state = true

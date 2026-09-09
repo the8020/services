@@ -1,6 +1,6 @@
 version = 1
 command = "services.list"
-program = "list"
+program = "the8020/services/list"
 summary = "List services"
 mutates_state = false
 restart_behavior = "none"

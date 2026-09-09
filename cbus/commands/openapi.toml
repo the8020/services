@@ -1,6 +1,6 @@
 version = 1
 command = "services.openapi"
-program = "openapi"
+program = "the8020/services/openapi"
 summary = "Export service OpenAPI"
 usage = "<service-id>"
 mutates_state = false

@@ -1,6 +1,6 @@
 version = 1
 command = "services.restart"
-program = "restart"
+program = "the8020/services/restart"
 summary = "Restart a service"
 usage = "<service-id> [--hard] [--detail]"
 mutates_state = true

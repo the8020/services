@@ -1,6 +1,6 @@
 version = 1
 command = "services.scale"
-program = "scale"
+program = "the8020/services/scale"
 summary = "Scale a service"
 description = "Update execution user, Worker scaling, sandbox placement, and lifecycle policy."
 usage = "<service-id> [options]"

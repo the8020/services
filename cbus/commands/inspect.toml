@@ -1,6 +1,6 @@
 version = 1
 command = "services.inspect"
-program = "inspect"
+program = "the8020/services/inspect"
 summary = "Inspect one service"
 usage = "<service-id>"
 mutates_state = false
