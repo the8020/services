@@ -1,6 +1,6 @@
 import { runtimeInfo } from "/p/the8020/admin-core/types/runtime.ts";
 import { username } from "/p/the8020/users/types/user.ts";
-import { field, z } from "/p/the8020/db/fields.ts";
+import { choiceHelp, field, z } from "/p/the8020/db/fields.ts";
 
 export const serviceId: z.ZodString = field(z.string(), {
   label: "Service",
@@ -36,6 +36,7 @@ export const serviceInfo = z.object({
     label: "Service type",
     description:
       "The declared service lifecycle: stateless for independent requests or session for a retained execution. An empty value indicates an unavailable declaration.",
+    valueHelp: choiceHelp(z.string(), ["stateless", "session"]),
   }),
   description: field(z.string(), {
     label: "Description",
@@ -45,6 +46,19 @@ export const serviceInfo = z.object({
     label: "Status",
     description:
       "The observed service health. An idle service can start Workers when requests arrive.",
+    valueHelp: choiceHelp(z.string(), [
+      "DISCOVERED",
+      "DISABLED",
+      "IDLE",
+      "PENDING_CAPACITY",
+      "STARTING",
+      "READY",
+      "DEGRADED",
+      "RESTARTING",
+      "DRAINING",
+      "STOPPED",
+      "FAILED",
+    ]),
   }),
   path: field(z.string(), {
     label: "Address",
@@ -59,6 +73,7 @@ export const serviceInfo = z.object({
     label: "Access",
     description:
       "Public services allow unauthenticated requests; authenticated services require a signed-in user.",
+    valueHelp: choiceHelp(z.string(), ["public", "authenticated"]),
   }),
   versionCount: field(z.number().int(), {
     label: "Live versions",

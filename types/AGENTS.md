@@ -25,6 +25,8 @@ Parent DOX: [services DOX](../AGENTS.md).
   selectable.
 - Open calls the selected service's public administration program. Load database
   and UUI dependencies only when the callback runs.
+- Observed lifecycle, service type, and access fields offer their known values
+  through shared paged choice help while retaining open string validation.
 
 # Work Guidance
 
