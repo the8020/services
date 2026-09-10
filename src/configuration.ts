@@ -11,6 +11,7 @@ export type {
 import { parse } from "jsr:@std/toml@1.0.11";
 import type { Selectable } from "/p/the8020/db/mod.ts";
 import type { ServiceOverrideRow } from "../tables/overrides.ts";
+import { serviceSettings } from "../types/service.ts";
 
 export type OverrideValues = {
   -readonly [K in keyof Selectable<ServiceOverrideRow>]?: Selectable<
@@ -167,10 +168,7 @@ export function declaration(source: string): Declaration {
     "version",
     "description",
   ]);
-  const mode = text(access.mode, "access.mode", "public");
-  if (mode !== "public" && mode !== "authenticated") {
-    throw new TypeError("access.mode must be public or authenticated");
-  }
+  const mode = parseAccessMode(text(access.mode, "access.mode", "public"));
   const action = text(policy.action, "access.unauthenticated.action", "reject");
   if (action !== "reject" && action !== "redirect") {
     throw new TypeError(
@@ -285,6 +283,24 @@ export function declaration(source: string): Declaration {
   }
   resolveConfiguration(result, undefined);
   return result;
+}
+
+export function resolveAccess(
+  manifest: Declaration,
+  override?: OverrideValues,
+) {
+  return {
+    ...manifest.access,
+    mode: parseAccessMode(override?.accessMode ?? manifest.access.mode),
+  };
+}
+
+function parseAccessMode(value: unknown) {
+  const mode = serviceSettings.shape.accessMode.safeParse(value);
+  if (!mode.success) {
+    throw new TypeError("access.mode must be public or authenticated");
+  }
+  return mode.data;
 }
 
 export function resolveConfiguration(

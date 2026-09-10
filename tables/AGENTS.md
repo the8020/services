@@ -21,6 +21,9 @@ Parent DOX: [services DOX](../AGENTS.md).
   fields. Durations in milliseconds and fractional utilization retain their
   existing physical representations.
 - Retired or removed declarations do not erase operator overrides.
+- `accessMode` in declarations, nullable overrides, and version snapshots reuses
+  the shared visibility field. Null overrides inherit the declaration; null
+  version values identify older snapshots that did not record access mode.
 - Normal activation retires removed schemas; physical removal remains an
   explicit confirmed trim.
 

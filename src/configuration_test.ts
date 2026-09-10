@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import {
   declaration,
   duration,
+  resolveAccess,
   resolveConfiguration,
 } from "./configuration.ts";
 
@@ -40,6 +41,20 @@ redirect_url = "/login"
   assertEquals(manifest.access.unauthenticated.status, 302);
   assertEquals(manifest.defaultEnabled, true);
   assertEquals(manifest.declared.anonymousUser, "worker1");
+  for (
+    const accessMode of [undefined, null, "public", "authenticated"] as const
+  ) {
+    assertEquals(resolveAccess(manifest, { accessMode }), {
+      ...manifest.access,
+      mode: accessMode ?? "authenticated",
+    });
+  }
+  assertEquals(manifest.access.mode, "authenticated");
+  assertThrows(
+    () => resolveAccess(manifest, { accessMode: "private" as "public" }),
+    TypeError,
+    "access.mode",
+  );
   assertThrows(
     () => resolveConfiguration(manifest, { maximumWorkers: 1 }),
     TypeError,

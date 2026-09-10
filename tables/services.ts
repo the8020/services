@@ -13,7 +13,7 @@ const Services = table("the8020__services__services", {
   manifestHash: t.text(),
   description: t.from(serviceInfo.shape.description),
   entrypoint: t.from(sourceInfo.shape.entrypoint),
-  accessMode: t.enum(["public", "authenticated"] as const),
+  accessMode: t.from(serviceSettings.shape.accessMode),
   unauthenticatedAction: t.enum(["reject", "redirect"] as const),
   unauthenticatedStatus: t.integer(),
   unauthenticatedMessage: t.text(),

@@ -98,6 +98,11 @@ export const serviceInfo = z.object({
 });
 
 export const serviceSettings = z.object({
+  accessMode: field(z.enum(["public", "authenticated"]), {
+    label: "Visibility",
+    description:
+      "Public allows unauthenticated requests. Private requires a signed-in user.",
+  }),
   anonymousUser: field(username, {
     label: "Public execution user",
     description:

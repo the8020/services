@@ -143,6 +143,10 @@ below.
   Precedence is package fallback, configured platform default, active
   declaration, then explicit operator override. A service version captures its
   resolved policy.
+- Visibility is an operator override using `public` or `authenticated`. It
+  inherits the declaration when unset and retains the declaration's
+  unauthenticated reject/redirect behavior. Publication and version snapshots
+  include the resolved visibility.
 - `lifecycle.session_keep_alive = "0s"` retains a session execution until
   explicit completion or destruction of its owner. Positive values are at least
   one millisecond. Omission retains the ten-minute default; Worker keepalive

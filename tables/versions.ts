@@ -10,6 +10,7 @@ const Versions = table("the8020__services__versions", {
   packageCommit: t.from(sourceInfo.shape.commit),
   manifestHash: t.text(),
   policyHash: t.text(),
+  accessMode: t.from(serviceSettings.shape.accessMode).nullable(),
   serviceType: t.from(serviceSettings.shape.serviceType),
   sessionKeepAliveMs: t.integer(),
   minimumWorkers: t.from(serviceSettings.shape.minimumWorkers),

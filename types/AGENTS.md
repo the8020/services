@@ -17,8 +17,9 @@ Parent DOX: [services DOX](../AGENTS.md).
   visibility, and read-only settings local. Target utilization in the form is
   explicitly a percentage; durable configuration retains its fraction. Text
   duration fields retain duration notation; durable rows retain milliseconds.
-- Observed service type and access fields accept incomplete inspection text; the
-  editable service type and stored declaration use the validated enum.
+- Observed service type and access fields accept incomplete inspection text;
+  editable service type and visibility reuse validated enums in tables and
+  forms. Visibility uses `public` and `authenticated` (Private in UUI).
 - Lookup exposes service ID, description, and enabled fields, with ID first. The
   shared SQL lookup applies full list queries before paging and returns the
   matching count. Only active declarations appear; disabled services remain

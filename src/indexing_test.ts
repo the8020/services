@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { DatabaseSync } from "node:sqlite";
 import {
   kernelDatabaseBackendSymbol,
@@ -301,6 +301,62 @@ Deno.test("package index provider owns durable declarations, versions, overrides
     const stale = await index({ ...scope, package_commit: "stale" });
     assertStringIncludes(stale.error!, "changed while indexing");
     assertEquals(count(), 4);
+    const { updateDesired } = await import("./admin.ts");
+    for (const accessMode of ["authenticated", "public", null] as const) {
+      const before = count();
+      assertEquals(
+        await updateDesired(`${packageId}/one`, { overrides: { accessMode } }),
+        packageId,
+      );
+      const published = await index();
+      assertEquals(published.error, undefined);
+      assertEquals(published.services[0]!.access.mode, accessMode ?? "public");
+      assertEquals(
+        count(),
+        before + 1,
+        "publication must reuse the saved version",
+      );
+      assertEquals(
+        sql.prepare(
+          `SELECT accessMode FROM ${Overrides.table} WHERE serviceId = ?`,
+        )
+          .get(`${packageId}/one`)!.accessMode,
+        accessMode,
+      );
+      assertEquals(
+        sql.prepare(
+          `SELECT accessMode FROM ${Services.table} WHERE serviceId = ?`,
+        )
+          .get(`${packageId}/one`)!.accessMode,
+        "public",
+        "operator visibility must not overwrite the declaration",
+      );
+      assertEquals(
+        sql.prepare(
+          `SELECT accessMode FROM ${Versions.table} WHERE serviceId = ? AND version = ?`,
+        )
+          .get(`${packageId}/one`, published.services[0]!.version)!.accessMode,
+        accessMode ?? "public",
+      );
+      assertEquals(
+        published.services[0]!.configuration.execution.anonymous_user,
+        "alice",
+      );
+    }
+    const beforeInvalid = count();
+    await assertRejects(
+      () =>
+        updateDesired(`${packageId}/one`, {
+          overrides: { accessMode: "private" as "public" },
+        }),
+      Error,
+      "access.mode",
+    );
+    assertEquals(
+      count(),
+      beforeInvalid,
+      "invalid visibility must not write a version",
+    );
     sql.prepare(
       `UPDATE ${Packages.table} SET state = 'retired' WHERE packageId = ?`,
     ).run(packageId);

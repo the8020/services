@@ -23,6 +23,7 @@ import {
   type Configuration,
   type Declaration,
   declaration,
+  resolveAccess,
   resolveConfiguration,
   type Specification,
 } from "./configuration.ts";
@@ -146,6 +147,7 @@ export function versionRow(
   manifestHash: string,
   policyHash: string,
   configuration: Configuration,
+  access: ReturnType<typeof resolveAccess>,
 ): Insertable<ServiceVersionRow> {
   return {
     serviceId,
@@ -153,6 +155,7 @@ export function versionRow(
     packageCommit,
     manifestHash,
     policyHash,
+    accessMode: access.mode,
     serviceType: configuration.lifecycle.service_type,
     sessionKeepAliveMs: configuration.lifecycle.session_keep_alive / 1_000_000,
     minimumWorkers: configuration.scaling.minimum_workers,
@@ -181,7 +184,8 @@ async function install(
     override,
     defaults,
   );
-  const policyHash = await hash(configuration);
+  const access = resolveAccess(source.manifest, override);
+  const policyHash = await hash({ configuration, accessMode: access.mode });
   const previous = existing === undefined
     ? undefined
     : await tx.selectFrom(Versions.table)
@@ -240,6 +244,7 @@ async function install(
       source.manifestHash,
       policyHash,
       configuration,
+      access,
     )).execute();
   }
   return {
@@ -250,7 +255,7 @@ async function install(
     description: manifest.description,
     enabled,
     openapi: manifest.openapi,
-    access: manifest.access,
+    access,
     configuration,
   };
 }

@@ -7,7 +7,11 @@ import {
 import Services from "../tables/services.ts";
 import Overrides from "../tables/overrides.ts";
 import Versions from "../tables/versions.ts";
-import { type OverrideValues, resolveConfiguration } from "./configuration.ts";
+import {
+  type OverrideValues,
+  resolveAccess,
+  resolveConfiguration,
+} from "./configuration.ts";
 import { hash, storedDeclaration, versionRow } from "./indexing.ts";
 import { loadDefaults } from "./defaults.ts";
 
@@ -44,8 +48,10 @@ export async function updateDesired(
         serviceId,
       ).executeTakeFirst();
       const override = { ...previous, ...change.overrides };
+      const manifest = storedDeclaration(row);
+      const access = resolveAccess(manifest, override);
       const configuration = resolveConfiguration(
-        storedDeclaration(row),
+        manifest,
         override,
         await loadDefaults(tx),
       );
@@ -74,8 +80,9 @@ export async function updateDesired(
         version,
         row.packageCommit,
         row.manifestHash,
-        await hash(configuration),
+        await hash({ configuration, accessMode: access.mode }),
         configuration,
+        access,
       )).execute();
       await invalidateIndexes(tx, [row.packageId]);
       return row.packageId;

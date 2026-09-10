@@ -14,6 +14,9 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 - Resolve package fallback, platform defaults, declaration, then explicit
   operator overrides; effective versions are immutable.
+- `resolveAccess` applies and validates visibility overrides while retaining the
+  declaration's unauthenticated reject/redirect policy. Mutations and indexing
+  share it; policy hashes include resolved visibility and configuration.
 - Package commit changes alone update source diagnostics without adding policy
   versions. Manual restart delegates to `kernel.services.restart`; `--hard`
   requests immediate termination of active and draining generations. Neither

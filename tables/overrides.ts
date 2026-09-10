@@ -5,6 +5,7 @@ import { username } from "/p/the8020/users/types/user.ts";
 
 const Overrides = table("the8020__services__overrides", {
   serviceId: t.from(serviceId).primaryKey(),
+  accessMode: t.from(serviceSettings.shape.accessMode).nullable(),
   serviceType: t.from(serviceSettings.shape.serviceType).nullable(),
   sessionKeepAliveMs: t.integer().nullable(),
   minimumWorkers: t.from(serviceSettings.shape.minimumWorkers).nullable(),
