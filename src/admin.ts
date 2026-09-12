@@ -1,4 +1,5 @@
 import { AdminCommandError, kernel } from "@the8020/kernel";
+import { requirePermission } from "/p/the8020/auth/mod.ts";
 import { db } from "/p/the8020/db/mod.ts";
 import {
   invalidateIndexes,
@@ -19,6 +20,7 @@ export async function updateDesired(
   serviceId: string,
   change: { enabled?: boolean; overrides?: OverrideValues },
 ): Promise<string> {
+  await requirePermission("services.service.edit", serviceId);
   if (
     !/^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/
       .test(serviceId)
@@ -133,4 +135,12 @@ export function serviceResult(
     "sandbox_count",
     "worker_count",
   ].map((key) => [key, status[key]]));
+}
+
+export async function restart(
+  serviceId: string,
+  mode: "soft" | "hard" = "soft",
+) {
+  await requirePermission("services.service.restart", serviceId);
+  return kernel.services.restart(serviceId, mode);
 }

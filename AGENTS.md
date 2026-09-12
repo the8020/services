@@ -139,6 +139,11 @@ below.
 
 # Local Contracts
 
+- Shared `src/admin.ts` mutations require `services.service.edit` or
+  `services.service.restart` against the canonical service ID. `setDefault`
+  requires `services.defaults.edit` against the default name. Both command and
+  UUI paths use these owners; `declarations/auth.toml` describes the actions.
+
 - `src/configuration.ts` owns declaration parsing, validation, and resolution.
   Precedence is package fallback, configured platform default, active
   declaration, then explicit operator override. A service version captures its

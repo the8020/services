@@ -4,7 +4,7 @@ import {
   parseCommandArguments,
   requiredCommandArgument,
 } from "@the8020/kernel";
-import { applyDesired, serviceResult } from "./admin.ts";
+import { applyDesired, restart, serviceResult } from "./admin.ts";
 import { duration, type OverrideValues } from "./configuration.ts";
 
 function integer(value: string | boolean | undefined, name: string) {
@@ -39,7 +39,7 @@ export function lifecycle(
     "service ID",
   );
   if (action === "restart") {
-    return kernel.services.restart(
+    return restart(
       serviceId,
       parsed.options.hard === true ? "hard" : "soft",
     )

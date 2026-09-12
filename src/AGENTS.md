@@ -12,6 +12,11 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 # Local Contracts
 
+- `updateDesired` authorizes `services.service.edit` before its transaction.
+  `restart` authorizes `services.service.restart` before the native operation;
+  commands and UUI share it. `setDefault` authorizes `services.defaults.edit`
+  before settings writes. Values are service IDs or the selected default name.
+
 - Resolve package fallback, platform defaults, declaration, then explicit
   operator overrides; effective versions are immutable.
 - `resolveAccess` applies and validates visibility overrides while retaining the

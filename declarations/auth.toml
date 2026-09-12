@@ -1,0 +1,3 @@
+"services.defaults.edit" = "Change a service default; value is the default name."
+"services.service.edit" = "Change enabled state or service configuration; value is namespace/package/service."
+"services.service.restart" = "Soft or hard restart a service; value is namespace/package/service."
