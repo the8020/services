@@ -1,8 +1,5 @@
-import {
-  AdminCommandError,
-  kernel,
-  parseCommandArguments,
-} from "@the8020/kernel";
+import { AdminCommandError, kernel } from "@the8020/kernel";
+import { parseCommandArguments } from "/p/the8020/packages/commands.ts";
 import { listDefaults, setDefault } from "../../src/defaults.ts";
 
 export default async function (...args: string[]) {

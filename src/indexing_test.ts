@@ -11,7 +11,7 @@ import {
 const globals = globalThis as unknown as Record<symbol, unknown>;
 globals[kernelDatabaseBackendSymbol] = "sqlite";
 const { descriptorOf } = await import("/p/the8020/db/mod.ts");
-const { buildIndex } = await import("./indexing.ts");
+const { buildIndex, openAPIDocument } = await import("./indexing.ts");
 const Services = (await import("../tables/services.ts")).default;
 const Overrides = (await import("../tables/overrides.ts")).default;
 const Versions = (await import("../tables/versions.ts")).default;
@@ -170,6 +170,74 @@ function database() {
   };
   return sql;
 }
+
+Deno.test("explicit OpenAPI export loads only the selected service and confines its entrypoint", async () => {
+  const root = await Deno.makeTempDir();
+  const packagesRoot = new URL(`file://${root}/`);
+  const serviceRoot = new URL("acme/api/services/docs/", packagesRoot);
+  try {
+    await Deno.mkdir(serviceRoot, { recursive: true });
+    await Deno.writeTextFile(
+      new URL("service.toml", serviceRoot),
+      `schema = 2
+[openapi]
+title = "Selected API"
+version = "2.0"
+description = "On demand"
+`,
+    );
+    await Deno.writeTextFile(
+      new URL("service.ts", serviceRoot),
+      `import { defineService, z } from ${
+        JSON.stringify(new URL("../http.ts", import.meta.url).href)
+      };
+export default defineService().get("/items/:id", { params: z.object({id: z.string()}) }, () => new Response("ok"));`,
+    );
+    const brokenRoot = new URL("../broken/", serviceRoot);
+    await Deno.mkdir(brokenRoot);
+    await Deno.writeTextFile(
+      new URL("service.toml", brokenRoot),
+      "invalid TOML [",
+    );
+    const document = await openAPIDocument("acme/api/docs", packagesRoot);
+    assertEquals(document.info, {
+      title: "Selected API",
+      version: "2.0",
+      description: "On demand",
+    });
+    assertEquals(document.servers, [{ url: "/acme/api/docs" }]);
+    assertEquals(Object.keys(document.paths as object), ["/items/{id}"]);
+    await assertRejects(
+      () => openAPIDocument("acme/api/../docs", packagesRoot),
+      TypeError,
+      "invalid service ID",
+    );
+    await Deno.writeTextFile(
+      new URL("service.toml", serviceRoot),
+      'schema = 2\nentrypoint = "../outside.ts"',
+    );
+    await assertRejects(
+      () => openAPIDocument("acme/api/docs", packagesRoot),
+      TypeError,
+      "invalid service entrypoint",
+    );
+    await Deno.writeTextFile(
+      new URL("service.toml", serviceRoot),
+      'schema = 2\nentrypoint = "plain.ts"',
+    );
+    await Deno.writeTextFile(
+      new URL("plain.ts", serviceRoot),
+      "export default {fetch: () => new Response('ok')};",
+    );
+    await assertRejects(
+      () => openAPIDocument("acme/api/docs", packagesRoot),
+      TypeError,
+      "does not provide OpenAPI",
+    );
+  } finally {
+    await Deno.remove(root, { recursive: true });
+  }
+});
 
 Deno.test("package index provider owns durable declarations, versions, overrides, and retirement", async () => {
   const sql = database();

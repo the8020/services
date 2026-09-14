@@ -12,7 +12,7 @@ import {
   type Insertable,
   type Selectable,
 } from "/p/the8020/db/mod.ts";
-import type { Transaction } from "kysely";
+import type { Transaction } from "/p/the8020/db/kysely.ts";
 import { lockIndexRevision } from "/p/the8020/system/src/indexes.ts";
 import Packages from "/p/the8020/packages/tables/packages.ts";
 import Services, { type ServiceRow } from "../tables/services.ts";
@@ -82,31 +82,69 @@ async function readSources(
       if (error instanceof Deno.errors.NotFound) continue;
       throw error;
     }
-    const canonicalRoot = await Deno.realPath(root);
-    await regularFile(manifestURL, canonicalRoot);
-    if ((await Deno.stat(manifestURL)).size > 1 << 20) {
-      throw new TypeError("service manifest exceeds 1 MiB");
-    }
-    const manifest = declaration(await Deno.readTextFile(manifestURL));
-    if (
-      manifest.entrypoint === "" ||
-      manifest.entrypoint.split("/").includes("..") ||
-      /[\\?#]/.test(manifest.entrypoint) ||
-      manifest.entrypoint.includes("\0") ||
-      manifest.entrypoint.startsWith("/")
-    ) {
-      throw new TypeError(`invalid service entrypoint: ${manifest.entrypoint}`);
-    }
-    const entrypoint = new URL(manifest.entrypoint, root);
-    await regularFile(entrypoint, canonicalRoot);
-    result.push({
-      id: `${packageId}/${entry.name}`,
-      manifest,
-      manifestHash: await hash(manifest),
-      entrypoint: entrypoint.href,
-    });
+    result.push(await readSource(`${packageId}/${entry.name}`, packageRoot));
   }
   return result;
+}
+
+// Targeted inspection and indexing share path, size, and declaration validation.
+export async function readSource(
+  serviceId: string,
+  packageRoot: URL,
+): Promise<Source> {
+  if (
+    !/^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/
+      .test(serviceId)
+  ) {
+    throw new TypeError("invalid service ID");
+  }
+  const name = serviceId.split("/")[2]!;
+  const root = new URL(`services/${name}/`, packageRoot);
+  if ((await Deno.lstat(root)).isSymlink) {
+    throw new TypeError(`service ${name} must not be a symlink`);
+  }
+  const manifestURL = new URL("service.toml", root);
+  const canonicalRoot = await Deno.realPath(root);
+  await regularFile(manifestURL, canonicalRoot);
+  if ((await Deno.stat(manifestURL)).size > 1 << 20) {
+    throw new TypeError("service manifest exceeds 1 MiB");
+  }
+  const manifest = declaration(await Deno.readTextFile(manifestURL));
+  if (
+    manifest.entrypoint === "" ||
+    manifest.entrypoint.split("/").includes("..") ||
+    /[\\?#]/.test(manifest.entrypoint) ||
+    manifest.entrypoint.includes("\0") ||
+    manifest.entrypoint.startsWith("/")
+  ) {
+    throw new TypeError(`invalid service entrypoint: ${manifest.entrypoint}`);
+  }
+  const entrypoint = new URL(manifest.entrypoint, root);
+  await regularFile(entrypoint, canonicalRoot);
+  return {
+    id: serviceId,
+    manifest,
+    manifestHash: await hash(manifest),
+    entrypoint: entrypoint.href,
+  };
+}
+
+export async function openAPIDocument(
+  serviceId: string,
+  root = new URL("file:///workspace/packages/"),
+): Promise<Record<string, unknown>> {
+  const packageId = serviceId.split("/").slice(0, 2).join("/");
+  const source = await readSource(serviceId, new URL(`${packageId}/`, root));
+  const service = (await import(source.entrypoint)).default;
+  if (typeof service?.openapi !== "function") {
+    throw new TypeError(
+      `service ${serviceId} does not provide OpenAPI documentation`,
+    );
+  }
+  return await service.openapi({
+    ...source.manifest.openapi,
+    canonicalBasePath: `/${serviceId}`,
+  });
 }
 
 export function storedDeclaration(row: Selectable<ServiceRow>): Declaration {
@@ -254,7 +292,6 @@ async function install(
     entrypoint: source.entrypoint,
     description: manifest.description,
     enabled,
-    openapi: manifest.openapi,
     access,
     configuration,
   };

@@ -1,10 +1,10 @@
+import { AdminCommandError, kernel } from "@the8020/kernel";
 import {
-  AdminCommandError,
-  kernel,
   parseCommandArguments,
   requiredCommandArgument,
-} from "@the8020/kernel";
+} from "/p/the8020/packages/commands.ts";
 import { applyDesired, restart, serviceResult } from "./admin.ts";
+import { openAPIDocument } from "./indexing.ts";
 import { duration, type OverrideValues } from "./configuration.ts";
 
 function integer(value: string | boolean | undefined, name: string) {
@@ -60,9 +60,10 @@ export function validate(...args: string[]) {
   );
 }
 
-export function openapi(...args: string[]) {
-  return kernel.services.openapi(requiredCommandArgument(args, 0, "service ID"))
-    .then((openapi) => ({ openapi }));
+export async function openapi(...args: string[]) {
+  const serviceId = requiredCommandArgument(args, 0, "service ID");
+  await kernel.services.inspect(serviceId);
+  return { openapi: await openAPIDocument(serviceId) };
 }
 
 export function scale(...args: string[]) {

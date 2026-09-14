@@ -116,7 +116,7 @@ below.
 - [programs/AGENTS.md](programs/AGENTS.md): Expose service administration and
   the ordinary service-index hook program.
 - [src/AGENTS.md](src/AGENTS.md): Own service declaration resolution,
-  configuration mutations, defaults, and package indexing.
+  configuration mutations, defaults, package indexing, and OpenAPI inspection.
 - [tables/AGENTS.md](tables/AGENTS.md): Describe service declarations, operator
   overrides, and immutable effective versions.
 - [types/AGENTS.md](types/AGENTS.md): Share service references with searchable
@@ -124,7 +124,8 @@ below.
 
 # Purpose
 
-- Own Deno service configuration for the independent `the8020/services` package.
+- Own HTTP service helpers and Deno service configuration for the independent
+  `the8020/services` package.
 
 # Ownership
 
@@ -139,6 +140,24 @@ below.
 
 # Local Contracts
 
+- `/p/the8020/services/http.ts` owns `defineService`, Hono routing, middleware,
+  Zod request validation, structured HTTP errors, WebSocket handlers, and
+  deterministic OpenAPI generation. It owns the Hono version and reexports the
+  shared Zod namespace from `/p/the8020/db/fields.ts`.
+- Handlers return standard `Response` objects; undeclared request bodies and
+  response streams remain unbuffered and cancellable. Routes are relative to the
+  canonical service prefix. Validation failures return 400; uncaught HTTP errors
+  return generic 500 responses associated with request identity.
+- WebSocket helpers use the runtime's abstract text/binary connection and
+  private acceptance marker. Physical upgrades, compression, capacity, and
+  lifetime remain generic runtime mechanisms. Response headers own compression
+  opt-outs.
+- `services.openapi` imports only the selected service's current source in its
+  ordinary program Worker and calls its `openapi` method. Service initialization
+  must support that explicit inspection. Documentation paths stay relative and
+  servers carry the canonical base path. Export errors do not prevent serving.
+  No document or schema metadata is published to the kernel's service index.
+
 - Shared `src/admin.ts` mutations require `services.service.edit` or
   `services.service.restart` against the canonical service ID. `setDefault`
   requires `services.defaults.edit` against the default name. Both command and
@@ -151,7 +170,11 @@ below.
 - Visibility is an operator override using `public` or `authenticated`. It
   inherits the declaration when unset and retains the declaration's
   unauthenticated reject/redirect behavior. Publication and version snapshots
-  include the resolved visibility.
+  include the resolved visibility. Every authenticated service accepts either
+  platform tokens or standard `Authorization: Basic` credentials through the
+  shared native boundary. The users package owns password/account checks;
+  service handlers receive the authenticated principal without the Basic
+  password.
 - `lifecycle.session_keep_alive = "0s"` retains a session execution until
   explicit completion or destruction of its owner. Positive values are at least
   one millisecond. Omission retains the ten-minute default; Worker keepalive
@@ -189,9 +212,9 @@ below.
   application configuration in Deno and trigger targeted publication.
   `services.restart` calls `kernel.services.restart` with soft mode by default
   and hard mode for `--hard`, preserving the enabled policy. Kernel operations
-  also supply observed list/inspect/refresh and runtime validation, request, and
-  OpenAPI primitives. UUI administration imports the same `src/admin.ts`
-  mutation functions within its current Worker.
+  also supply observed list/inspect/refresh, runtime startup validation, and
+  requests. UUI administration imports the same `src/admin.ts` mutation
+  functions within its current Worker.
 - Local package commands use the ordinary system job runtime and remain usable
   when HTTP services or authentication are broken, provided the database and
   execution runtime work. Publication errors report whether desired settings
@@ -201,6 +224,12 @@ below.
   confirmed trim. Never delete deployed tables through ad hoc cleanup.
 
 # Work Guidance
+
+- Build only what the request and established contracts require. Before adding a
+  mechanism, identify that need and why existing owners or standard tools cannot
+  meet it. Do not invent stronger guarantees for hypothetical cases. Remove
+  unsupported additions at closeout; agent-written tests and DOX do not
+  authorize them. Preserve required correctness, security, and data integrity.
 
 - Keep declarations, defaults, operator policy, and effective versions in this
   standalone Deno package. New application behavior uses ordinary services and
@@ -214,5 +243,8 @@ below.
 # Verification
 
 - `deno task check` formats, lints, and type-checks schemas and programs.
-- `deno task test` covers policy resolution, table contracts, and transactional
-  package indexing. Kernel tests own publication/failure and runtime routing.
+- `deno task test` covers HTTP methods, routes, shared Zod identity/inference,
+  middleware, validation/errors, streaming/cancellation, WebSockets, explicit
+  OpenAPI export and source confinement, policy resolution, table contracts, and
+  transactional package indexing. Kernel tests own publication/failure and
+  runtime routing.

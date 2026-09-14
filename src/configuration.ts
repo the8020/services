@@ -120,7 +120,7 @@ export interface Declaration {
   entrypoint: string;
   description: string;
   defaultEnabled: boolean;
-  openapi: Specification["openapi"];
+  openapi: { title: string; version: string; description: string };
   access: Specification["access"];
   declared: Omit<OverrideValues, "serviceId" | "updatedAt">;
 }

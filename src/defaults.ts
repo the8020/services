@@ -1,7 +1,7 @@
 import { AdminCommandError } from "@the8020/kernel";
 import { requirePermission } from "/p/the8020/auth/mod.ts";
 import { type Database, db } from "/p/the8020/db/mod.ts";
-import type { Transaction } from "kysely";
+import type { Transaction } from "/p/the8020/db/kysely.ts";
 import Settings from "/p/the8020/system/tables/settings.ts";
 import {
   invalidateIndexes,

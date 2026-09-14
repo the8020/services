@@ -2,8 +2,8 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 # Purpose
 
-- Own service declaration resolution, configuration mutations, defaults, and
-  package indexing.
+- Own service declaration resolution, configuration mutations, defaults, package
+  indexing, and explicit OpenAPI inspection.
 
 # Ownership
 
@@ -11,6 +11,11 @@ Parent DOX: [services DOX](../AGENTS.md).
   helpers, and colocated tests.
 
 # Local Contracts
+
+- Indexing and explicit OpenAPI inspection share `readSource` for service ID,
+  symlink, entrypoint containment, manifest size, and declaration validation.
+  `openAPIDocument` imports only the selected service. Native startup validation
+  and kernel index fragments contain no OpenAPI metadata or generation step.
 
 - `updateDesired` authorizes `services.service.edit` before its transaction.
   `restart` authorizes `services.service.restart` before the native operation;
