@@ -147,7 +147,8 @@ function database() {
     }
     const parameters = (input.parameters as unknown[]).map((value) => {
       if (value !== null && typeof value === "object") {
-        const tagged = value as { type: string; value: string | boolean };
+        const tagged = value as { type: string; value: unknown };
+        if (tagged.type === "json") return JSON.stringify(tagged.value);
         return tagged.type === "boolean" ? Number(tagged.value) : tagged.value;
       }
       return typeof value === "boolean" ? Number(value) : value;
@@ -294,6 +295,15 @@ Deno.test("package index provider owns durable declarations, versions, overrides
     };
     const initial = await index();
     assertEquals(initial.services.length, 2);
+    const { getSystemProfile } = await import("/p/the8020/system/profile.ts");
+    const profile = await getSystemProfile();
+    assertEquals(
+      initial.services.map((service) => service.access.cookie_name),
+      [
+        `the8020_auth_${profile.id}`,
+        `the8020_auth_${profile.id}`,
+      ],
+    );
     assertEquals(count(), 2);
     await index();
     assertEquals(

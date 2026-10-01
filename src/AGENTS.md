@@ -38,6 +38,10 @@ Parent DOX: [services DOX](../AGENTS.md).
   changes, then reindex affected packages.
 - Kernel routing consumes validated fragments and owns execution; it never reads
   application service tables or TOML.
+- Every published service carries `access.cookie_name` from users'
+  `authenticationCookie()`. This derived credential selector is separate from
+  declarations, overrides, and policy versions; native HTTP and console routing
+  consume it without querying the system profile per request.
 
 # Work Guidance
 

@@ -15,6 +15,7 @@ import {
 import type { Transaction } from "/p/the8020/db/kysely.ts";
 import { lockIndexRevision } from "/p/the8020/system/src/indexes.ts";
 import Packages from "/p/the8020/packages/tables/packages.ts";
+import { authenticationCookie } from "/p/the8020/users/mod.ts";
 import Services, { type ServiceRow } from "../tables/services.ts";
 import Overrides, { type ServiceOverrideRow } from "../tables/overrides.ts";
 import Versions, { type ServiceVersionRow } from "../tables/versions.ts";
@@ -304,10 +305,16 @@ export async function buildIndex(
   scope: Readonly<IndexScope>,
   root = new URL("file:///workspace/packages/"),
 ): Promise<void> {
+  const cookieName = await authenticationCookie();
   for (const selected of scope.packages) {
     const draft = state.packages[selected.package_id]!;
     try {
-      draft.services.push(...await indexPackage(selected, root));
+      draft.services.push(
+        ...(await indexPackage(selected, root)).map((service) => ({
+          ...service,
+          access: { ...service.access, cookie_name: cookieName },
+        })),
+      );
     } catch (error) {
       draft.error = error instanceof Error ? error.message : String(error);
     }
