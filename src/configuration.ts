@@ -6,9 +6,7 @@ export type {
   ServiceConfiguration as Configuration,
   ServiceSpecification as Specification,
 } from "@the8020/kernel";
-// Package dependencies use qualified imports under the shared runtime import map.
-// deno-lint-ignore no-import-prefix
-import { parse } from "jsr:@std/toml@1.0.11";
+import { parse } from "/p/the8020/packages/toml.ts";
 import type { Selectable } from "/p/the8020/db/mod.ts";
 import type { ServiceOverrideRow } from "../tables/overrides.ts";
 import { serviceSettings } from "../types/service.ts";
