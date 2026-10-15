@@ -121,6 +121,8 @@ below.
   overrides, and immutable effective versions.
 - [types/AGENTS.md](types/AGENTS.md): Share service references with searchable
   value help, service metadata, and reusable configuration fields.
+- [vendor/AGENTS.md](vendor/AGENTS.md): Pin and bundle Hono with upstream types
+  and its license.
 
 # Purpose
 
@@ -142,8 +144,11 @@ below.
 
 - `/p/the8020/services/http.ts` owns `defineService`, Hono routing, middleware,
   Zod request validation, structured HTTP errors, WebSocket handlers, and
-  deterministic OpenAPI generation. It owns the Hono version and reexports the
-  shared Zod namespace from `/p/the8020/db/fields.ts`.
+  deterministic OpenAPI generation. Hono's pin, committed bundle, and original
+  type entrypoint live in `vendor/`; `deno task bundle` regenerates that
+  external dependency before publication. HTTP reexports the shared Zod
+  namespace from `/p/the8020/db/fields.ts`. Declaration parsing imports the
+  unchanged standard TOML parser through `/p/the8020/packages/toml.ts`.
 - Handlers return standard `Response` objects; undeclared request bodies and
   response streams remain unbuffered and cancellable. Routes are relative to the
   canonical service prefix. Validation failures return 400; uncaught HTTP errors
