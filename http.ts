@@ -1,5 +1,5 @@
-// deno-lint-ignore no-import-prefix
-import { type Context as HonoContext, Hono } from "jsr:@hono/hono@4.9.8";
+// @deno-types="./vendor/hono.ts"
+import { type Context as HonoContext, Hono } from "./vendor/hono.js";
 import { z } from "/p/the8020/db/fields.ts";
 
 export { z };
