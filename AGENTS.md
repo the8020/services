@@ -256,6 +256,9 @@ below.
 
 # Verification
 
+- Run package tasks inside an 80|20 Deno workspace; its root config supplies
+  platform imports. The package config owns dependencies and tasks.
+
 - `deno task check` formats, lints, and type-checks schemas and programs.
 - `deno task test` covers HTTP methods, routes, shared Zod identity/inference,
   middleware, validation/errors, streaming/cancellation, WebSockets, explicit
