@@ -3,7 +3,13 @@ import {
   parseCommandArguments,
   requiredCommandArgument,
 } from "/p/the8020/packages/commands.ts";
-import { applyDesired, restart, serviceResult } from "./admin.ts";
+import {
+  applyDesired,
+  inspectService,
+  listServices,
+  restart,
+  serviceResult,
+} from "./admin.ts";
 import { openAPIDocument } from "./indexing.ts";
 import { duration, type OverrideValues } from "./configuration.ts";
 
@@ -18,11 +24,11 @@ function integer(value: string | boolean | undefined, name: string) {
 }
 
 export function list() {
-  return kernel.services.list().then((services) => ({ services }));
+  return listServices().then((services) => ({ services }));
 }
 
 export function inspect(...args: string[]) {
-  return kernel.services.inspect(requiredCommandArgument(args, 0, "service ID"))
+  return inspectService(requiredCommandArgument(args, 0, "service ID"))
     .then((service) => ({ service }));
 }
 

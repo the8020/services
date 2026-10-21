@@ -17,10 +17,11 @@ Parent DOX: [services DOX](../AGENTS.md).
   `openAPIDocument` imports only the selected service. Native startup validation
   and kernel index fragments contain no OpenAPI metadata or generation step.
 
-- `updateDesired` authorizes `services.service.edit` before its transaction.
-  `restart` authorizes `services.service.restart` before the native operation;
-  commands and UUI share it. `setDefault` authorizes `services.defaults.edit`
-  before settings writes. Values are service IDs or the selected default name.
+- `updateDesired` authorizes `the8020.services.service.edit` before its
+  transaction. `restart` authorizes `the8020.services.service.restart` before
+  the native operation; commands and UUI share it. `setDefault` authorizes
+  `the8020.services.defaults.edit` before settings writes. Values are service
+  IDs or the selected default name.
 
 - Resolve package fallback, platform defaults, declaration, then explicit
   operator overrides; effective versions are immutable.

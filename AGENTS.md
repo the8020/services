@@ -142,6 +142,11 @@ below.
 
 # Local Contracts
 
+- Service reads go through `src/admin.ts`: `listServices()` keeps services the
+  current user may view (`the8020.services.service.view`, value service ID)
+  through auth's unaudited `filter`, and `inspectService(id)` requires it. Admin
+  screens and `services.list`/`services.inspect` use them instead of calling
+  `kernel.services` directly.
 - `/p/the8020/services/http.ts` owns `defineService`, Hono routing, middleware,
   Zod request validation, structured HTTP errors, WebSocket handlers, and
   deterministic OpenAPI generation. Hono's pin, committed bundle, and original
@@ -163,10 +168,11 @@ below.
   servers carry the canonical base path. Export errors do not prevent serving.
   No document or schema metadata is published to the kernel's service index.
 
-- Shared `src/admin.ts` mutations require `services.service.edit` or
-  `services.service.restart` against the canonical service ID. `setDefault`
-  requires `services.defaults.edit` against the default name. Both command and
-  UUI paths use these owners; `declarations/auth.toml` describes the actions.
+- Shared `src/admin.ts` mutations require `the8020.services.service.edit` or
+  `the8020.services.service.restart` against the canonical service ID.
+  `setDefault` requires `the8020.services.defaults.edit` against the default
+  name. Both command and UUI paths use these owners; `declarations/auth.toml`
+  describes the actions.
 
 - `src/configuration.ts` owns declaration parsing, validation, and resolution.
   Precedence is package fallback, configured platform default, active

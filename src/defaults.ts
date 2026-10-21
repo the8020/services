@@ -70,7 +70,7 @@ export async function setDefault(
   name: string,
   value: number | undefined,
 ): Promise<string[]> {
-  await requirePermission("services.defaults.edit", name);
+  await requirePermission("the8020.services.defaults.edit", name);
   if (
     !fields.some(([key]) => key === name) ||
     value !== undefined && !Number.isSafeInteger(value)

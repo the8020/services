@@ -1,3 +1,4 @@
-"services.defaults.edit" = "Change a service default; value is the default name."
-"services.service.edit" = "Change enabled state or service configuration; value is namespace/package/service."
-"services.service.restart" = "Soft or hard restart a service; value is namespace/package/service."
+"the8020.services.service.view" = "View a service, its configuration, versions, sandboxes and Workers; value is namespace/package/service."
+"the8020.services.defaults.edit" = "Change a service default; value is the default name."
+"the8020.services.service.edit" = "Change enabled state or service configuration; value is namespace/package/service."
+"the8020.services.service.restart" = "Soft or hard restart a service; value is namespace/package/service."

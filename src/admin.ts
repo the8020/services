@@ -1,5 +1,6 @@
 import { AdminCommandError, kernel } from "@the8020/kernel";
-import { requirePermission } from "/p/the8020/auth/mod.ts";
+import { filter, requirePermission } from "/p/the8020/auth/mod.ts";
+import { context } from "@the8020/context";
 import { db } from "/p/the8020/db/mod.ts";
 import {
   invalidateIndexes,
@@ -16,11 +17,32 @@ import {
 import { hash, storedDeclaration, versionRow } from "./indexing.ts";
 import { loadDefaults } from "./defaults.ts";
 
+const VIEW = "the8020.services.service.view";
+
+/** Observed services the current user may view; never audits. */
+export async function listServices<
+  Result extends { service_id: string } = { service_id: string },
+>(): Promise<Result[]> {
+  return await filter(
+    context.username,
+    await kernel.services.list<Result>(),
+    { service_id: VIEW } as Partial<Record<keyof Result, string>>,
+  );
+}
+
+/** One observed service; requires view for its ID. */
+export async function inspectService<Result = Record<string, unknown>>(
+  serviceId: string,
+): Promise<Result> {
+  await requirePermission(VIEW, serviceId);
+  return await kernel.services.inspect<Result>(serviceId);
+}
+
 export async function updateDesired(
   serviceId: string,
   change: { enabled?: boolean; overrides?: OverrideValues },
 ): Promise<string> {
-  await requirePermission("services.service.edit", serviceId);
+  await requirePermission("the8020.services.service.edit", serviceId);
   if (
     !/^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/
       .test(serviceId)
@@ -141,6 +163,6 @@ export async function restart(
   serviceId: string,
   mode: "soft" | "hard" = "soft",
 ) {
-  await requirePermission("services.service.restart", serviceId);
+  await requirePermission("the8020.services.service.restart", serviceId);
   return kernel.services.restart(serviceId, mode);
 }
