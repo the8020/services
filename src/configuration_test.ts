@@ -79,7 +79,7 @@ Deno.test("service declaration errors are rejected before desired configuration 
       "schema = 2\n[scaling]\nminimum_workers = 0.5",
       "schema = 2\n[scaling]\ntarget_utilization = 0",
       "schema = 2\n[placement]\nworkers_per_sandbox = 0",
-      "schema = 2\n[execution]\nanonymous_user = 'unknown-user'",
+      "schema = 2\n[execution]\nanonymous_user = 'unknown.user'",
       "schema = 2\n[access]\nmode = 'optional'",
       "schema = 2\n[access.unauthenticated]\naction = 'redirect'",
     ]

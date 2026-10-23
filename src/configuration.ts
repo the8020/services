@@ -349,7 +349,9 @@ export function resolveConfiguration(
 }
 
 export function validateConfiguration(value: Configuration): void {
-  if (!/^[a-z0-9]{3,32}$/.test(value.execution.anonymous_user)) {
+  if (
+    !/^[a-z0-9][a-z0-9_-]{1,30}[a-z0-9]$/.test(value.execution.anonymous_user)
+  ) {
     throw new TypeError("invalid execution.anonymous_user");
   }
   if (!["stateless", "session"].includes(value.lifecycle.service_type)) {
