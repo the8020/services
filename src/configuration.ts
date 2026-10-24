@@ -154,7 +154,21 @@ export function declaration(source: string): Declaration {
     "workers_per_sandbox",
   ]);
   const execution = object(manifest.execution, "execution", ["anonymous_user"]);
-  const access = object(manifest.access, "access", ["mode", "unauthenticated"]);
+  const access = object(manifest.access, "access", [
+    "mode",
+    "unauthenticated",
+    "credential_namespace",
+  ]);
+  const credentialNamespace = text(
+    access.credential_namespace,
+    "access.credential_namespace",
+  );
+  if (
+    credentialNamespace !== "" &&
+    !/^[A-Za-z0-9][A-Za-z0-9_./:-]{0,255}$/.test(credentialNamespace)
+  ) {
+    throw new TypeError("invalid access.credential_namespace");
+  }
   const policy = object(access.unauthenticated, "access.unauthenticated", [
     "action",
     "status",
@@ -227,6 +241,9 @@ export function declaration(source: string): Declaration {
     },
     access: {
       mode,
+      ...(credentialNamespace === ""
+        ? {}
+        : { credential_namespace: credentialNamespace }),
       unauthenticated: {
         action,
         status,
@@ -287,9 +304,12 @@ export function resolveAccess(
   manifest: Declaration,
   override?: OverrideValues,
 ) {
+  const mode = parseAccessMode(override?.accessMode ?? manifest.access.mode);
   return {
     ...manifest.access,
-    mode: parseAccessMode(override?.accessMode ?? manifest.access.mode),
+    mode,
+    credential_namespace: manifest.access.credential_namespace ??
+      (mode === "authenticated" ? "package:the8020/users" : undefined),
   };
 }
 

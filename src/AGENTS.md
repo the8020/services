@@ -44,6 +44,18 @@ Parent DOX: [services DOX](../AGENTS.md).
   declarations, overrides, and policy versions; native HTTP and console routing
   consume it without querying the system profile per request.
 
+- `access.credential_namespace` optionally declares a shared credential store
+  using 1–256 ASCII letters/digits and `_./:-`, starting alphanumeric. Resolved
+  authenticated platform services default to `package:the8020/users`; public
+  services without an explicit value use their isolated native service
+  namespace. Public platform login opts into users explicitly. Namespace
+  participates in the manifest hash/version and native Worker startup.
+  Reindexing reads it from the declaration after ordinary operator configuration
+  changes; it is not an operator override or a new database field.
+  Source/manifest administrators control sharing; request handlers cannot choose
+  another scope. Custom stores keep public/service-owned authentication and
+  their own policy.
+
 # Work Guidance
 
 - Add service policy here through the existing resolution and mutation

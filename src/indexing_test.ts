@@ -424,6 +424,30 @@ Deno.test("package index provider owns durable declarations, versions, overrides
         "alice",
       );
     }
+    const beforeNamespace = count();
+    await Deno.writeTextFile(
+      new URL("services/one/service.toml", packageRoot),
+      `${
+        manifest(12)
+      }[access]\ncredential_namespace = "package:acme/accounts"\n`,
+    );
+    const namespaced = await index();
+    assertEquals(namespaced.error, undefined);
+    assertEquals(count(), beforeNamespace + 1);
+    assertEquals(
+      namespaced.services[0]!.access.credential_namespace,
+      "package:acme/accounts",
+    );
+    await updateDesired(`${packageId}/one`, {
+      overrides: { minimumWorkers: 1 },
+    });
+    const republished = await index();
+    assertEquals(republished.error, undefined);
+    assertEquals(
+      republished.services[0]!.access.credential_namespace,
+      "package:acme/accounts",
+    );
+    assertEquals(count(), beforeNamespace + 2);
     const beforeInvalid = count();
     await assertRejects(
       () =>

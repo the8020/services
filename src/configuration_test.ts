@@ -47,6 +47,9 @@ redirect_url = "/login"
     assertEquals(resolveAccess(manifest, { accessMode }), {
       ...manifest.access,
       mode: accessMode ?? "authenticated",
+      credential_namespace: accessMode === "public"
+        ? undefined
+        : "package:the8020/users",
     });
   }
   assertEquals(manifest.access.mode, "authenticated");
@@ -120,4 +123,21 @@ Deno.test("zero session keepalive retains execution until explicit completion", 
     () => declaration('schema = 2\n[scaling]\nworker_keep_alive = "0s"'),
     TypeError,
   );
+});
+
+Deno.test("credential namespaces are explicit for public stores and shared for platform authentication", () => {
+  const publicService = declaration('schema = 2\n[access]\nmode = "public"');
+  assertEquals(resolveAccess(publicService).credential_namespace, undefined);
+  const shared = declaration(
+    'schema = 2\n[access]\nmode = "public"\ncredential_namespace = "package:the8020/users"',
+  );
+  assertEquals(
+    resolveAccess(shared).credential_namespace,
+    "package:the8020/users",
+  );
+  for (const value of ["bad space", "x".repeat(257)]) {
+    assertThrows(() =>
+      declaration(`schema = 2\n[access]\ncredential_namespace = "${value}"`)
+    );
+  }
 });
