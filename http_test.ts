@@ -1,3 +1,7 @@
+import { Localization, withLocalization } from "/p/the8020/i18n/mod.ts";
+
+import { test } from "./test_localization.ts";
+
 import {
   defineService,
   HTTPError,
@@ -8,7 +12,7 @@ import {
 import { z as sharedZod } from "/p/the8020/db/fields.ts";
 import { assert, assertEquals, assertMatch } from "@std/assert";
 
-Deno.test("HTTP and database fields share the complete Zod API and schema identity", () => {
+test("HTTP and database fields share the complete Zod API and schema identity", () => {
   assert(z === sharedZod);
   const bundled = z;
   const source = sharedZod;
@@ -60,7 +64,7 @@ function context(contextId = "request-1"): RuntimeServiceContext {
   };
 }
 
-Deno.test("framework supports every required method and standard Response values", async () => {
+test("framework supports every required method and standard Response values", async () => {
   const service = defineService();
   for (
     const method of [
@@ -108,7 +112,7 @@ Deno.test("framework supports every required method and standard Response values
   assertEquals(await all.text(), "all");
 });
 
-Deno.test("framework validates params query headers and JSON bodies before handlers", async () => {
+test("framework validates params query headers and JSON bodies before handlers", async () => {
   const service = defineService();
   service.post(
     "/items/:itemId",
@@ -160,7 +164,7 @@ Deno.test("framework validates params query headers and JSON bodies before handl
   assertEquals(problem.error.location, "params");
 });
 
-Deno.test("framework middleware is ordinary ordered TypeScript", async () => {
+test("framework middleware is ordinary ordered TypeScript", async () => {
   const calls: string[] = [];
   const service = defineService();
   service.use(async ({ meta }, next) => {
@@ -182,7 +186,7 @@ Deno.test("framework middleware is ordinary ordered TypeScript", async () => {
   assertEquals(calls, ["before:request-1", "handler", "after"]);
 });
 
-Deno.test("framework preserves Hono patterns, catch-all, and registration order", async () => {
+test("framework preserves Hono patterns, catch-all, and registration order", async () => {
   const service = defineService();
   service.get(
     "/ordered/:value",
@@ -207,7 +211,7 @@ Deno.test("framework preserves Hono patterns, catch-all, and registration order"
   assertEquals(await wildcard.text(), "/files/a/b/c");
 });
 
-Deno.test("framework returns deliberate HTTP errors and hides uncaught failures", async () => {
+test("framework returns deliberate HTTP errors and hides uncaught failures", async () => {
   const service = defineService();
   service.get("/expected", {}, () => {
     throw new HTTPError(409, { error: "conflict" });
@@ -231,7 +235,7 @@ Deno.test("framework returns deliberate HTTP errors and hides uncaught failures"
   assert(!text.includes("private stack detail"));
 });
 
-Deno.test("framework leaves undeclared bodies streaming and propagates cancellation", async () => {
+test("framework leaves undeclared bodies streaming and propagates cancellation", async () => {
   let cancelled = false;
   const service = defineService();
   service.post("/stream", {}, async ({ request, signal }) => {
@@ -262,7 +266,7 @@ Deno.test("framework leaves undeclared bodies streaming and propagates cancellat
   assert(cancelled);
 });
 
-Deno.test("OpenAPI output is deterministic, relative, and schema-derived", () => {
+test("OpenAPI output is deterministic, relative, and schema-derived", () => {
   const service = defineService();
   service.get("/orders/:orderId", {
     summary: "Fetch order",
@@ -306,7 +310,7 @@ Deno.test("OpenAPI output is deterministic, relative, and schema-derived", () =>
   );
 });
 
-Deno.test("WebSocket routes preserve middleware, metadata, and bidirectional messages", async () => {
+test("WebSocket routes preserve middleware, metadata, and bidirectional messages", async () => {
   const service = defineService();
   const controller = new AbortController();
   const sent: Array<string | Uint8Array> = [];
@@ -387,4 +391,70 @@ Deno.test("WebSocket routes preserve middleware, metadata, and bidirectional mes
     canonicalBasePath: "/core/websocket/service",
   }) as { paths: Record<string, Record<string, unknown>> };
   assert(document.paths["/events/{topic}"]?.["x-80-20-websocket"]);
+});
+
+Deno.test("service language headers isolate shared schemas and reject disabled languages", async () => {
+  const { context: execution } = await import("@the8020/context");
+  const { translations } = await import("/p/the8020/i18n/mod.ts");
+  const config = {
+    defaultLanguage: "en",
+    languages: ["en", "sk", "pt"].map((code) => ({ code, name: code })),
+    fallbacks: {},
+  };
+  const service = defineService().post("/", {
+    body: z.object({ name: z.string().min(1) }),
+  }, async () => {
+    const t = await translations("example/service");
+    await Promise.resolve();
+    return Response.json({ language: execution.language, text: t("hello") });
+  });
+  await withLocalization(
+    new Localization("en", config, (packageId, chain) =>
+      Promise.resolve({
+        package: packageId,
+        language: chain[0]!,
+        texts: {
+          hello: chain[0]!,
+          "validation.required": `required-${chain[0]}`,
+        },
+      })),
+    async () => {
+      for (const invalid of [false, true]) {
+        const responses = await Promise.all(
+          ["sk", "pt"].map(async (language) => {
+            const response = await service.fetch(
+              new Request("https://test/", {
+                method: "POST",
+                headers: {
+                  "the8020-language": language,
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify({ name: invalid ? "" : "Alice" }),
+              }),
+              context(),
+            );
+            assertEquals(response.headers.get("content-language"), language);
+            assertEquals(response.status, invalid ? 400 : 200);
+            const body = await response.json();
+            if (invalid) {
+              assert(JSON.stringify(body).includes(`required-${language}`));
+            } else assertEquals(body, { language, text: language });
+            return response;
+          }),
+        );
+        assertEquals(responses.length, 2);
+      }
+      assertEquals(
+        (await service.fetch(
+          new Request("https://test/", {
+            method: "POST",
+            headers: { "the8020-language": "de" },
+          }),
+          context(),
+        )).status,
+        400,
+      );
+      assertEquals(execution.language, "en");
+    },
+  );
 });

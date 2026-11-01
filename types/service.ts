@@ -1,11 +1,11 @@
+import { msg } from "/p/the8020/services/i18n/messages.ts";
 import { runtimeInfo } from "/p/the8020/admin-core/types/runtime.ts";
 import { username } from "/p/the8020/users/types/user.ts";
 import { choiceHelp, field, z } from "/p/the8020/db/fields.ts";
 
 export const serviceId: z.ZodString = field(z.string(), {
-  label: "Service",
-  description:
-    "Open a service to see its health, running capacity, and settings.",
+  label: msg("service.service"),
+  description: msg("service.open_a_service_to_see_its_health"),
   valueHelp: async (request) => {
     const { default: Services } = await import("../tables/services.ts");
     const { lookupPage } = await import("/p/the8020/db/lookup.ts");
@@ -33,19 +33,19 @@ export const serviceId: z.ZodString = field(z.string(), {
 
 export const serviceInfo = z.object({
   serviceType: field(z.string(), {
-    label: "Service type",
-    description:
-      "The declared service lifecycle: stateless for independent requests or session for a retained execution. An empty value indicates an unavailable declaration.",
+    label: msg("service.service_type"),
+    description: msg(
+      "service.the_declared_service_lifecycle_stateless_for_independent",
+    ),
     valueHelp: choiceHelp(z.string(), ["stateless", "session"]),
   }),
   description: field(z.string(), {
-    label: "Description",
-    description: "What this service provides to callers.",
+    label: msg("service.description"),
+    description: msg("service.what_this_service_provides_to_callers"),
   }),
   state: field(z.string(), {
-    label: "Status",
-    description:
-      "The observed service health. An idle service can start Workers when requests arrive.",
+    label: msg("service.status"),
+    description: msg("service.the_observed_service_health_an_idle_service"),
     valueHelp: choiceHelp(z.string(), [
       "DISCOVERED",
       "DISABLED",
@@ -61,96 +61,100 @@ export const serviceInfo = z.object({
     ]),
   }),
   path: field(z.string(), {
-    label: "Address",
-    description: "The address at which callers reach this service.",
+    label: msg("service.address"),
+    description: msg("service.the_address_at_which_callers_reach_this"),
   }),
   enabled: field(z.boolean(), {
-    label: "Enabled",
-    description:
-      "Allow this service to accept work. Disabling stops new work and drains running work.",
+    label: msg("service.enabled"),
+    description: msg("service.allow_this_service_to_accept_work_disabling"),
   }),
   accessMode: field(z.string(), {
-    label: "Access",
-    description:
-      "Public services allow unauthenticated requests; authenticated services require a signed-in user.",
+    label: msg("service.access"),
+    description: msg(
+      "service.public_services_allow_unauthenticated_requests_authenticated_services",
+    ),
     valueHelp: choiceHelp(z.string(), ["public", "authenticated"]),
   }),
   versionCount: field(z.number().int(), {
-    label: "Live versions",
-    description:
-      "Number of service versions still running, including versions draining older work.",
+    label: msg("service.live_versions"),
+    description: msg(
+      "service.number_of_service_versions_still_running_including",
+    ),
   }),
   desiredVersion: field(z.number().int(), {
-    label: "Desired version",
-    description:
-      "The service configuration version requested by the current settings.",
+    label: msg("service.desired_version"),
+    description: msg(
+      "service.the_service_configuration_version_requested_by_the",
+    ),
   }),
   loadedVersion: field(z.number().int(), {
-    label: "Loaded version",
-    description:
-      "The service configuration version currently loaded on this node.",
+    label: msg("service.loaded_version"),
+    description: msg(
+      "service.the_service_configuration_version_currently_loaded_on",
+    ),
   }),
   version: field(z.number().int(), {
-    label: "Version",
-    description:
-      "The service configuration version associated with this running capacity.",
+    label: msg("service.version"),
+    description: msg(
+      "service.the_service_configuration_version_associated_with_this",
+    ),
   }),
 });
 
 export const serviceSettings = z.object({
   accessMode: field(z.enum(["public", "authenticated"]), {
-    label: "Visibility",
-    description:
-      "Public allows unauthenticated requests. Private requires a signed-in user.",
+    label: msg("service.visibility"),
+    description: msg(
+      "service.public_allows_unauthenticated_requests_private_requires_a",
+    ),
   }),
   anonymousUser: field(username, {
-    label: "Public execution user",
-    description:
-      "Runs unauthenticated requests with this identity. Enter an identity directly or choose an account; account sign-in settings do not limit service execution.",
+    label: msg("service.public_execution_user"),
+    description: msg(
+      "service.runs_unauthenticated_requests_with_this_identity_enter",
+    ),
   }),
   minimumWorkers: field(z.number().int().nonnegative(), {
-    label: "Minimum Workers",
-    description:
-      "Keep this many Workers ready. **0** allows idle Workers to stop and start again when needed.",
+    label: msg("service.minimum_workers"),
+    description: msg("service.keep_this_many_workers_ready_0_allows"),
   }),
   maximumWorkers: field(z.number().int().nonnegative(), {
-    label: "Maximum Workers",
-    description:
-      "Limit the number of Workers this service may start. **0** means no service limit; available resources still limit capacity.",
+    label: msg("service.maximum_workers"),
+    description: msg("service.limit_the_number_of_workers_this_service"),
   }),
   concurrencyPerWorker: field(z.number().int().positive(), {
-    label: "Requests per Worker",
-    description: "Maximum number of concurrent requests handled by one Worker.",
+    label: msg("service.requests_per_worker"),
+    description: msg(
+      "service.maximum_number_of_concurrent_requests_handled_by",
+    ),
   }),
   targetUtilizationPercent: field(z.number().min(1).max(100), {
-    label: "Target utilization",
-    description:
-      "Target percentage of occupied request slots used when scaling Workers. A lower target keeps more spare capacity.",
+    label: msg("service.target_utilization"),
+    description: msg(
+      "service.target_percentage_of_occupied_request_slots_used",
+    ),
   }),
   workerKeepAlive: field(z.string().min(1), {
-    label: "Idle Worker timeout",
-    description:
-      "How long an excess idle Worker stays ready. Use a positive duration such as `30s`, `5m`, or `1h`.",
+    label: msg("service.idle_worker_timeout"),
+    description: msg("service.how_long_an_excess_idle_worker_stays"),
   }),
   sandboxGroup: runtimeInfo.shape.sandboxGroup,
   minimumSandboxes: field(z.number().int().nonnegative(), {
-    label: "Minimum sandboxes",
-    description:
-      "Keep this many compatible sandboxes ready even with zero Workers.",
+    label: msg("service.minimum_sandboxes"),
+    description: msg("service.keep_this_many_compatible_sandboxes_ready_even"),
   }),
   workersPerSandbox: field(z.number().int().positive(), {
-    label: "Workers per sandbox",
-    description:
-      "Maximum number of this service's Workers placed in one sandbox.",
+    label: msg("service.workers_per_sandbox"),
+    description: msg("service.maximum_number_of_this_service_s_workers"),
   }),
   serviceType: field(z.enum(["stateless", "session"]), {
-    label: "Service type",
-    description:
-      "Stateless services handle independent requests. Session services retain an execution across requests until it ends or times out.",
+    label: msg("service.service_type"),
+    description: msg(
+      "service.stateless_services_handle_independent_requests_session_services",
+    ),
   }),
   sessionKeepAlive: field(z.string().min(1), {
-    label: "Idle session timeout",
-    description:
-      "How long an inactive session stays available, for example `30m` or `2h`. **0s** keeps it until it ends or its environment is stopped.",
+    label: msg("service.idle_session_timeout"),
+    description: msg("service.how_long_an_inactive_session_stays_available"),
   }),
 });

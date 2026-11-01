@@ -1,3 +1,4 @@
+import { metadataText } from "/p/the8020/packages/localization.ts";
 import { AdminCommandError, kernel } from "@the8020/kernel";
 import { filter, requirePermission } from "/p/the8020/auth/mod.ts";
 import { context } from "@the8020/context";
@@ -21,13 +22,17 @@ const VIEW = "the8020.services.service.view";
 
 /** Observed services the current user may view; never audits. */
 export async function listServices<
-  Result extends { service_id: string } = { service_id: string },
+  Result extends { service_id: string; description?: string } = {
+    service_id: string;
+  },
 >(): Promise<Result[]> {
-  return await filter(
+  const rows = await filter(
     context.username,
     await kernel.services.list<Result>(),
     { service_id: VIEW } as Partial<Record<keyof Result, string>>,
   );
+  for (const row of rows) await localizeService(row.service_id, row);
+  return rows;
 }
 
 /** One observed service; requires view for its ID. */
@@ -35,7 +40,9 @@ export async function inspectService<Result = Record<string, unknown>>(
   serviceId: string,
 ): Promise<Result> {
   await requirePermission(VIEW, serviceId);
-  return await kernel.services.inspect<Result>(serviceId);
+  const result = await kernel.services.inspect<Result>(serviceId);
+  await localizeService(serviceId, result);
+  return result;
 }
 
 export async function updateDesired(
@@ -165,4 +172,16 @@ export async function restart(
 ) {
   await requirePermission("the8020.services.service.restart", serviceId);
   return kernel.services.restart(serviceId, mode);
+}
+
+async function localizeService(id: string, value: unknown): Promise<void> {
+  if (
+    !value || typeof value !== "object" || !("description" in value) ||
+    typeof value.description !== "string"
+  ) return;
+  value.description = await metadataText(
+    id.split("/").slice(0, 2).join("/"),
+    `services.${id.split("/")[2]}.description`,
+    value.description,
+  );
 }

@@ -106,6 +106,8 @@ relevant child AGENTS.md
 
 ## Child DOX Index
 
+- [i18n/AGENTS.md](i18n/AGENTS.md): English and Czech presentation catalogs.
+
 This root retains repository-wide contracts and files outside the child scopes
 below.
 
@@ -141,6 +143,16 @@ below.
   tokens identify exact targets; supervisors own their live bindings.
 
 # Local Contracts
+
+- HTTP and WebSocket handlers run in a request-local localization scope.
+  `the8020-language` selects an enabled canonical language; invalid overrides
+  return 400. Otherwise use the effective execution account preference (caller
+  for authenticated services, configured user for public services), then system
+  default. Language never changes execution authority.
+- Translation preparation is cached by i18n. Validation uses a per-parse Zod
+  error map, never global locales. Localized responses carry Content-Language
+  and vary on the language header; account-derived authenticated responses are
+  private/no-store. Untouched asset responses retain their original headers.
 
 - Service reads go through `src/admin.ts`: `listServices()` keeps services the
   current user may view (`the8020.services.service.view`, value service ID)
@@ -271,3 +283,6 @@ below.
   OpenAPI export and source confinement, policy resolution, table contracts, and
   transactional package indexing. Kernel tests own publication/failure and
   runtime routing.
+
+- `test_localization.ts` supplies an English request scope for service unit
+  tests that use runtime doubles without a database.

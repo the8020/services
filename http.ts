@@ -1,6 +1,9 @@
 // @deno-types="./vendor/hono.ts"
 import { type Context as HonoContext, Hono } from "./vendor/hono.js";
 import { z } from "/p/the8020/db/fields.ts";
+import { localizedRequest } from "./language.ts";
+import { currentLocalization, translations } from "/p/the8020/i18n/mod.ts";
+import { validationError } from "/p/the8020/i18n/validation.ts";
 
 export { z };
 
@@ -364,7 +367,11 @@ class Service implements ServiceBuilder {
     const runtimeContext = normalizedRuntimeContext(request, context);
     const headRequest = request.method === "HEAD";
     try {
-      const response = await this.#app.fetch(request, { runtimeContext });
+      const response = await localizedRequest(
+        request,
+        runtimeContext,
+        () => this.#app.fetch(request, { runtimeContext }),
+      );
       if (headRequest) {
         return new Response(null, {
           status: response.status,
@@ -388,7 +395,11 @@ class Service implements ServiceBuilder {
       websocket: socket,
     };
     try {
-      return await this.#websocketApp.fetch(request, { runtimeContext });
+      return await localizedRequest(
+        request,
+        runtimeContext,
+        () => this.#websocketApp.fetch(request, { runtimeContext }),
+      );
     } catch (error) {
       return handleError(error, runtimeContext);
     }
@@ -626,7 +637,8 @@ async function validateInput(
   contextId: string,
 ): Promise<unknown> {
   if (schema === undefined) return {};
-  const result = await schema.safeParseAsync(value);
+  await currentLocalization()?.bundle("the8020/i18n");
+  const result = await schema.safeParseAsync(value, { error: validationError });
   if (!result.success) {
     throw new InputValidationError(location, result.error.issues, contextId);
   }
@@ -643,11 +655,12 @@ async function validatedBody(
   try {
     value = await request.json();
   } catch {
+    const t = await translations("the8020/i18n");
     throw new InputValidationError(
       "body",
       [{
         code: "invalid_json",
-        message: "request body must be valid JSON",
+        message: t("service.invalidJSON"),
         path: [],
       }],
       contextId,
@@ -669,10 +682,10 @@ function queryValues(rawUrl: string): Record<string, string | string[]> {
   return output;
 }
 
-function handleError(
+async function handleError(
   error: unknown,
   context: RuntimeServiceContext,
-): Response {
+): Promise<Response> {
   if (error instanceof InputValidationError) {
     return Response.json({
       error: {
@@ -712,8 +725,14 @@ function handleError(
       error: error instanceof Error ? error.message : String(error),
     },
   });
+  const t = currentLocalization()
+    ? await translations("the8020/i18n")
+    : undefined;
   return Response.json({
-    error: { code: "internal_error", message: "Internal server error" },
+    error: {
+      code: "internal_error",
+      message: t?.("service.internalError") ?? "Internal server error",
+    },
     context_id: context.meta.contextId,
   }, { status: 500 });
 }
