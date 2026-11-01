@@ -28,6 +28,6 @@
     "bundle": "bash build-dependencies.sh",
     "check": "bash -n build-dependencies.sh && deno fmt --check . && deno lint . && deno check http.ts http_test.ts types/*.ts tables/*.ts src/*.ts programs/*/*.ts && deno task check:i18n",
     "test": "deno test --allow-read=.,/tmp --allow-write=/tmp .",
-    "check:i18n": "deno run --allow-read ../i18n/check.ts --complete=cs ."
+    "check:i18n": "deno run --allow-read ../i18n/check.ts --complete=builtin ."
   }
 }
