@@ -198,7 +198,9 @@ below.
   platform tokens or standard `Authorization: Basic` credentials through the
   shared native boundary. The users package owns password/account checks;
   service handlers receive the authenticated principal without the Basic
-  password.
+  password. `meta.auth.method` tells them how it was authenticated (`password`,
+  `certificate`, `token` with `tokenSource`, or `native`), so a service can
+  require a client certificate; older kernels omit it.
 - `lifecycle.session_keep_alive = "0s"` retains a session execution until
   explicit completion or destruction of its owner. Positive values are at least
   one millisecond. Omission retains the ten-minute default; Worker keepalive
