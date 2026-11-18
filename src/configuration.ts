@@ -1,3 +1,5 @@
+import { text as formatMessage } from "/p/the8020/i18n/mod.ts";
+import { msg as messageSymbol } from "/p/the8020/services/i18n/messages.ts";
 import type {
   ServiceConfiguration as Configuration,
   ServiceSpecification as Specification,
@@ -40,24 +42,47 @@ export const defaults: Readonly<Configuration> = {
 function object(value: unknown, name: string, keys: string[]) {
   if (value === undefined) return {} as Record<string, unknown>;
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
-    throw new TypeError(`${name} must be a table`);
+    throw new TypeError(
+      formatMessage(
+        messageSymbol("errors.must_be_a_table", { name: String(name) }),
+      ),
+    );
   }
   for (const key of Object.keys(value)) {
-    if (!keys.includes(key)) throw new TypeError(`unknown ${name}.${key}`);
+    if (!keys.includes(key)) {
+      throw new TypeError(
+        formatMessage(
+          messageSymbol("errors.unknown", {
+            name: String(name),
+            key: String(key),
+          }),
+        ),
+      );
+    }
   }
   return value as Record<string, unknown>;
 }
 
 function text(value: unknown, name: string, fallback = ""): string {
   if (value === undefined) return fallback;
-  if (typeof value !== "string") throw new TypeError(`${name} must be text`);
+  if (typeof value !== "string") {
+    throw new TypeError(
+      formatMessage(
+        messageSymbol("errors.must_be_text", { name: String(name) }),
+      ),
+    );
+  }
   return value;
 }
 
 function number(value: unknown, name: string, fallback: number): number {
   if (value === undefined) return fallback;
   if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new TypeError(`${name} must be a finite number`);
+    throw new TypeError(
+      formatMessage(
+        messageSymbol("errors.must_be_a_finite_number", { name: String(name) }),
+      ),
+    );
   }
   return value;
 }
@@ -65,7 +90,11 @@ function number(value: unknown, name: string, fallback: number): number {
 function boolean(value: unknown, name: string, fallback: boolean): boolean {
   if (value === undefined) return fallback;
   if (typeof value !== "boolean") {
-    throw new TypeError(`${name} must be boolean`);
+    throw new TypeError(
+      formatMessage(
+        messageSymbol("errors.must_be_boolean", { name: String(name) }),
+      ),
+    );
   }
   return value;
 }
@@ -76,7 +105,13 @@ export function duration(
   allowZero = false,
 ): number {
   if (typeof value !== "string") {
-    throw new TypeError(`${name} must be a positive duration`);
+    throw new TypeError(
+      formatMessage(
+        messageSymbol("errors.must_be_a_positive_duration", {
+          name: String(name),
+        }),
+      ),
+    );
   }
   const units: Record<string, number> = {
     ns: 1,
@@ -96,7 +131,11 @@ export function duration(
     )
   ) {
     if (match.index !== offset) {
-      throw new TypeError(`${name} is not a duration`);
+      throw new TypeError(
+        formatMessage(
+          messageSymbol("errors.is_not_a_duration", { name: String(name) }),
+        ),
+      );
     }
     total += Number(match[1]) * units[match[2]!]!;
     offset += match[0].length;
@@ -106,9 +145,14 @@ export function duration(
     (allowZero ? total < 0 : total <= 0)
   ) {
     throw new TypeError(
-      `${name} must be a ${
-        allowZero ? "nonnegative" : "positive"
-      }, representable duration`,
+      formatMessage(
+        messageSymbol(
+          allowZero
+            ? "errors.nonnegative_duration"
+            : "errors.positive_duration",
+          { name },
+        ),
+      ),
     );
   }
   return total;
@@ -316,7 +360,11 @@ export function resolveAccess(
 function parseAccessMode(value: unknown) {
   const mode = serviceSettings.shape.accessMode.safeParse(value);
   if (!mode.success) {
-    throw new TypeError("access.mode must be public or authenticated");
+    throw new TypeError(
+      formatMessage(
+        messageSymbol("errors.access_mode_must_be_public_or_authenticated"),
+      ),
+    );
   }
   return mode.data;
 }
@@ -372,10 +420,14 @@ export function validateConfiguration(value: Configuration): void {
   if (
     !/^[a-z0-9][a-z0-9_-]{1,30}[a-z0-9]$/.test(value.execution.anonymous_user)
   ) {
-    throw new TypeError("invalid execution.anonymous_user");
+    throw new TypeError(
+      formatMessage(messageSymbol("errors.invalid_execution_anonymous_user")),
+    );
   }
   if (!["stateless", "session"].includes(value.lifecycle.service_type)) {
-    throw new TypeError("invalid lifecycle.service_type");
+    throw new TypeError(
+      formatMessage(messageSymbol("errors.invalid_lifecycle_service_type")),
+    );
   }
   for (
     const [name, count] of Object.entries({
@@ -385,7 +437,13 @@ export function validateConfiguration(value: Configuration): void {
     })
   ) {
     if (!Number.isSafeInteger(count) || count < 0) {
-      throw new TypeError(`${name} must be a nonnegative integer`);
+      throw new TypeError(
+        formatMessage(
+          messageSymbol("errors.must_be_a_nonnegative_integer", {
+            name: String(name),
+          }),
+        ),
+      );
     }
   }
   for (
@@ -395,21 +453,41 @@ export function validateConfiguration(value: Configuration): void {
     })
   ) {
     if (!Number.isSafeInteger(count) || count < 1) {
-      throw new TypeError(`${name} must be a positive integer`);
+      throw new TypeError(
+        formatMessage(
+          messageSymbol("errors.must_be_a_positive_integer", {
+            name: String(name),
+          }),
+        ),
+      );
     }
   }
   if (
     value.scaling.maximum_workers !== 0 &&
     value.scaling.minimum_workers > value.scaling.maximum_workers
-  ) throw new TypeError("minimum_workers exceeds maximum_workers");
+  ) {
+    throw new TypeError(
+      formatMessage(
+        messageSymbol("errors.minimum_workers_exceeds_maximum_workers"),
+      ),
+    );
+  }
   if (
     !(value.scaling.target_utilization > 0 &&
       value.scaling.target_utilization <= 1)
-  ) throw new TypeError("target_utilization must be in (0, 1]");
+  ) {
+    throw new TypeError(
+      formatMessage(messageSymbol("errors.target_utilization_must_be_in_0_1")),
+    );
+  }
   if (
     value.placement.sandbox_group.trim() !== value.placement.sandbox_group ||
     value.placement.sandbox_group.includes("\0")
-  ) throw new TypeError("invalid sandbox_group");
+  ) {
+    throw new TypeError(
+      formatMessage(messageSymbol("errors.invalid_sandbox_group")),
+    );
+  }
   for (
     const [name, time] of Object.entries({
       worker_keep_alive: value.scaling.worker_keep_alive,
@@ -418,7 +496,11 @@ export function validateConfiguration(value: Configuration): void {
     })
   ) {
     if (!Number.isSafeInteger(time) || time <= 0) {
-      throw new TypeError(`${name} must be positive`);
+      throw new TypeError(
+        formatMessage(
+          messageSymbol("errors.must_be_positive", { name: String(name) }),
+        ),
+      );
     }
   }
   const sessionKeepAlive = value.lifecycle.session_keep_alive;
@@ -427,10 +509,14 @@ export function validateConfiguration(value: Configuration): void {
     sessionKeepAlive > 0 && sessionKeepAlive < 1_000_000
   ) {
     throw new TypeError(
-      "session_keep_alive must be zero or at least one millisecond",
+      formatMessage(
+        messageSymbol("errors.session_keep_alive_must_be_zero_or_at_least_one"),
+      ),
     );
   }
   if (!Number.isSafeInteger(value.timeouts.idle) || value.timeouts.idle < 0) {
-    throw new TypeError("invalid idle timeout");
+    throw new TypeError(
+      formatMessage(messageSymbol("errors.invalid_idle_timeout")),
+    );
   }
 }

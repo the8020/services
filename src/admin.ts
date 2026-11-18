@@ -1,3 +1,6 @@
+import { prepareTexts } from "/p/the8020/i18n/mod.ts";
+import { localizedText as resolveMessage } from "/p/the8020/i18n/mod.ts";
+import { msg as messageSymbol } from "/p/the8020/services/i18n/messages.ts";
 import { metadataText } from "/p/the8020/packages/localization.ts";
 import { AdminCommandError, kernel } from "@the8020/kernel";
 import { filter, requirePermission } from "/p/the8020/auth/mod.ts";
@@ -49,6 +52,9 @@ export async function updateDesired(
   serviceId: string,
   change: { enabled?: boolean; overrides?: OverrideValues },
 ): Promise<string> {
+  await prepareTexts(
+    messageSymbol("errors.service_id_must_be_namespace_package_service"),
+  );
   await requirePermission("the8020.services.service.edit", serviceId);
   if (
     !/^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/
@@ -56,7 +62,9 @@ export async function updateDesired(
   ) {
     throw new AdminCommandError({
       code: "invalid_arguments",
-      message: "service ID must be namespace/package/service",
+      message: await resolveMessage(
+        messageSymbol("errors.service_id_must_be_namespace_package_service"),
+      ),
     });
   }
   try {
@@ -70,7 +78,11 @@ export async function updateDesired(
       if (row === undefined || !row.active) {
         throw new AdminCommandError({
           code: "not_found",
-          message: `service ${serviceId} is not installed`,
+          message: await resolveMessage(
+            messageSymbol("errors.service_is_not_installed", {
+              serviceId: String(serviceId),
+            }),
+          ),
         });
       }
       const previous = await tx.selectFrom(Overrides.table).selectAll().where(
@@ -140,9 +152,16 @@ export async function applyDesired(
   } catch (error) {
     throw new AdminCommandError({
       code: "runtime_operation",
-      message: `desired configuration was saved; package reindex failed: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
+      message: await resolveMessage(
+        messageSymbol(
+          "errors.desired_configuration_was_saved_package_reindex_failed",
+          {
+            value1: String(
+              error instanceof Error ? error.message : String(error),
+            ),
+          },
+        ),
+      ),
     });
   }
   const status = await kernel.services.inspect(serviceId);
