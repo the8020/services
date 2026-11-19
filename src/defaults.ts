@@ -1,3 +1,8 @@
+import {
+  localizedText as resolveMessage,
+  text as formatMessage,
+} from "/p/the8020/i18n/mod.ts";
+import { msg as messageSymbol } from "/p/the8020/services/i18n/messages.ts";
 import { AdminCommandError } from "@the8020/kernel";
 import { requirePermission } from "/p/the8020/auth/mod.ts";
 import { type Database, db } from "/p/the8020/db/mod.ts";
@@ -33,7 +38,13 @@ function resolve(values: Map<string, unknown>): Configuration {
     const value = values.get(`services.default_${name}`);
     if (value === undefined) continue;
     if (typeof value !== "number" || !Number.isSafeInteger(value)) {
-      throw new TypeError(`default ${name} must be an integer`);
+      throw new TypeError(
+        formatMessage(
+          messageSymbol("errors.default_must_be_an_integer", {
+            name: String(name),
+          }),
+        ),
+      );
     }
     Object.assign(result[group], { [field]: value * multiplier });
   }
@@ -77,8 +88,11 @@ export async function setDefault(
   ) {
     throw new AdminCommandError({
       code: "invalid_arguments",
-      message:
-        "a known service default and integer value are required; durations use milliseconds",
+      message: await resolveMessage(
+        messageSymbol(
+          "errors.a_known_service_default_and_integer_value_are_required_durations",
+        ),
+      ),
     });
   }
   try {
