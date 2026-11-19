@@ -1,6 +1,8 @@
 import { installContextProvider } from "../../kernel/defaults/config/runtime/deno/context/runtime.ts";
 import type { ExecutionContext } from "@the8020/context";
-installContextProvider(() => ({ username: "system" } as ExecutionContext));
+installContextProvider(
+  () => ({ username: "system", nodeId: "node-old" } as ExecutionContext),
+);
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { DatabaseSync } from "node:sqlite";
 import {
@@ -19,6 +21,8 @@ const Revisions =
   (await import("/p/the8020/system/tables/revisions.ts")).default;
 const Packages =
   (await import("/p/the8020/packages/tables/packages.ts")).default;
+const NodePackages =
+  (await import("/p/the8020/packages/tables/node_packages.ts")).default;
 const Settings = (await import("/p/the8020/system/tables/settings.ts")).default;
 
 Deno.test("restart commands use typed lifecycle without writing configuration", async () => {
@@ -113,6 +117,7 @@ function database() {
       Versions,
       Revisions,
       Packages,
+      NodePackages,
       Settings,
     ]
   ) {
@@ -378,6 +383,18 @@ Deno.test("package index provider owns durable declarations, versions, overrides
       sql.prepare(`SELECT active FROM ${Services.table} WHERE serviceId = ?`)
         .get(`${packageId}/two`)!.active,
       0,
+    );
+    sql.prepare(
+      `INSERT INTO ${NodePackages.table} (nodeId,packageId,activeCommit,ready) VALUES (?,?,?,true)`,
+    ).run("node-old", packageId, "commit-a");
+    const serving = await index({ ...scope, package_commit: "commit-a" });
+    assertEquals(serving.error, undefined);
+    assertEquals(serving.services[0]!.code_revision, "commit-a");
+    assertEquals(
+      sql.prepare(
+        `SELECT packageCommit FROM ${Services.table} WHERE serviceId = ?`,
+      ).get(`${packageId}/one`)!.packageCommit,
+      "commit-b",
     );
     const stale = await index({ ...scope, package_commit: "stale" });
     assertStringIncludes(stale.error!, "changed while indexing");

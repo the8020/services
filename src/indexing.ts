@@ -14,7 +14,7 @@ import {
 } from "/p/the8020/db/mod.ts";
 import type { Transaction } from "/p/the8020/db/kysely.ts";
 import { lockIndexRevision } from "/p/the8020/system/src/indexes.ts";
-import Packages from "/p/the8020/packages/tables/packages.ts";
+import { publishesSharedIndex } from "/p/the8020/packages/src/index-scope.ts";
 import { authenticationCookie } from "/p/the8020/users/mod.ts";
 import Services, { type ServiceRow } from "../tables/services.ts";
 import Overrides, { type ServiceOverrideRow } from "../tables/overrides.ts";
@@ -217,6 +217,7 @@ async function install(
   existing: Selectable<ServiceRow> | undefined,
   override: Selectable<ServiceOverrideRow> | undefined,
   defaults: Configuration,
+  publish: boolean,
 ): Promise<Specification> {
   const configuration = resolveConfiguration(
     source.manifest,
@@ -233,7 +234,10 @@ async function install(
   const changed = existing === undefined ||
     existing.manifestHash !== source.manifestHash ||
     previous?.policyHash !== policyHash;
-  const version = (existing?.desiredVersion ?? 0) + (changed ? 1 : 0);
+  const version = Math.max(
+    1,
+    (existing?.desiredVersion ?? 0) + (publish && changed ? 1 : 0),
+  );
   const manifest = source.manifest;
   const enabled = existing?.enabled ?? manifest.defaultEnabled;
   const row = {
@@ -265,8 +269,8 @@ async function install(
     updatedAt: new Date(),
   };
   if (
-    changed || !existing?.active ||
-    existing.packageCommit !== scope.package_commit
+    publish && (changed || !existing?.active ||
+      existing.packageCommit !== scope.package_commit)
   ) {
     await tx.insertInto(Services.table).values({
       serviceId: source.id,
@@ -275,7 +279,7 @@ async function install(
     }).onConflict((conflict) => conflict.column("serviceId").doUpdateSet(row))
       .execute();
   }
-  if (changed) {
+  if (publish && changed) {
     await tx.insertInto(Versions.table).values(versionRow(
       source.id,
       version,
@@ -335,23 +339,7 @@ async function indexPackage(
     : [];
   return await db.transaction().execute(async (tx) => {
     await lockIndexRevision(tx);
-    const active = await tx.selectFrom(Packages.table).select([
-      "activeCommit",
-      "state",
-    ])
-      .where("packageId", "=", scope.package_id).executeTakeFirst();
-    if (
-      scope.active &&
-      (active?.state !== "ready" ||
-        active.activeCommit !== scope.package_commit)
-    ) {
-      throw new Error(
-        `package ${scope.package_id} changed while indexing; draft was not applied`,
-      );
-    }
-    if (!scope.active && active?.state === "ready") {
-      throw new Error(`package ${scope.package_id} is still active`);
-    }
+    const publish = await publishesSharedIndex(tx, scope);
     const existing = await tx.selectFrom(Services.table).selectAll()
       .where("packageId", "=", scope.package_id).execute();
     const overrides = sources.length === 0
@@ -371,6 +359,7 @@ async function indexPackage(
           byId.get(source.id),
           overridesById.get(source.id),
           defaults,
+          publish,
         ),
       );
     }
@@ -378,7 +367,7 @@ async function indexPackage(
     const retired = existing.filter((row) =>
       row.active && !included.has(row.serviceId)
     );
-    if (retired.length > 0) {
+    if (publish && retired.length > 0) {
       await tx.updateTable(Services.table).set({
         active: false,
         updatedAt: new Date(),

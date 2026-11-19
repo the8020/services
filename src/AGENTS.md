@@ -12,6 +12,9 @@ Parent DOX: [services DOX](../AGENTS.md).
 
 # Local Contracts
 
+- Each node builds specifications from its installed package. Only a checkout
+  matching the system publication updates shared service declarations.
+
 - Indexing and explicit OpenAPI inspection share `readSource` for service ID,
   symlink, entrypoint containment, manifest size, and declaration validation.
   `openAPIDocument` imports only the selected service. Native startup validation
